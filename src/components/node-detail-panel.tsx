@@ -1,4 +1,4 @@
-import { X, ExternalLink, FileCode, MapPin } from 'lucide-react';
+import { X } from 'lucide-react';
 import { type GraphNode, nodeTypeConfig, type BomComponent, type BomService } from '../lib/graph-data';
 
 interface NodeDetailPanelProps {
@@ -7,7 +7,7 @@ interface NodeDetailPanelProps {
 }
 
 function isComponent(raw: BomComponent | BomService): raw is BomComponent {
-  return 'evidence' in raw || 'modelCard' in raw || 'licenses' in raw;
+  return 'evidence' in raw || 'modelCard' in raw || 'licenses' in raw || !('endpoints' in raw);
 }
 
 export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
@@ -19,100 +19,97 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   const service = !isComponent(raw) ? raw : null;
 
   return (
-    <div className="w-80 bg-card/90 backdrop-blur-md border-l border-border/50 h-full flex flex-col">
+    <div className="w-96 bg-card/95 backdrop-blur-md border border-border/50 rounded-xl h-auto max-h-[70vh] flex flex-col absolute right-4 top-52 shadow-2xl overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border/50 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-md flex items-center justify-center text-xl"
-            style={{ 
-              backgroundColor: config.bgColor,
-              borderColor: config.borderColor,
-              borderWidth: 1,
-            }}
-          >
-            <span style={{ color: config.color }}>{config.icon}</span>
-          </div>
-          <div>
-            <h3 className="font-medium text-foreground">{node.label}</h3>
-            <p className="text-xs text-muted-foreground">{config.label}</p>
-          </div>
-        </div>
+      <div className="p-5 border-b border-border/30 flex items-start justify-between">
+        <h2 className="text-xl font-semibold text-foreground">AI component details</h2>
         <button
           onClick={onClose}
-          className="p-1 rounded-md hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground"
+          className="p-1.5 rounded-md hover:bg-secondary/50 transition-colors text-muted-foreground hover:text-foreground"
         >
-          <X size={16} />
+          <X size={18} />
         </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Full Name */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        {/* Type */}
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Asset Name</label>
-          <p className="mt-1.5 text-sm font-medium text-foreground break-all">{node.fullName}</p>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider">Type</label>
+          <p className="mt-1 text-base text-foreground">{config.label}</p>
         </div>
 
-        {/* BOM Reference */}
+        {/* Name */}
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider">BOM Reference</label>
-          <p className="mt-1.5 text-xs font-mono text-foreground/60 bg-secondary/30 border border-border/30 rounded-md px-2 py-1.5 break-all">
-            {node.id}
-          </p>
+          <label className="text-xs text-muted-foreground uppercase tracking-wider">Name</label>
+          <p className="mt-1 text-base text-foreground break-all">{node.fullName}</p>
         </div>
 
-        {/* Manufacturer / Publisher / Provider */}
-        {component?.manufacturer && (
+        {/* Publisher (for components) */}
+        {component?.publisher && (
           <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Manufacturer</label>
-            <p className="mt-1.5 text-sm text-foreground/80">{component.manufacturer.name}</p>
-            {component.manufacturer.url?.[0] && (
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Publisher</label>
+            <p className="mt-1 text-base text-foreground">{component.publisher}</p>
+          </div>
+        )}
+
+        {/* Manufacturer (for models) */}
+        {component?.manufacturer && (
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Manufacturer</label>
+            {component.manufacturer.url?.[0] ? (
               <a 
                 href={component.manufacturer.url[0]} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-accent hover:underline flex items-center gap-1 mt-1"
+                className="mt-1 block text-base text-blue-400 hover:underline"
               >
-                <ExternalLink size={10} />
-                {component.manufacturer.url[0]}
+                {component.manufacturer.name}
               </a>
+            ) : (
+              <p className="mt-1 text-base text-foreground">{component.manufacturer.name}</p>
             )}
           </div>
         )}
 
-        {component?.publisher && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Publisher</label>
-            <p className="mt-1.5 text-sm text-foreground/80">{component.publisher}</p>
-          </div>
-        )}
-
+        {/* Provider (for services) */}
         {service?.provider && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Provider</label>
-            <p className="mt-1.5 text-sm text-foreground/80">{service.provider.name}</p>
-            {service.provider.url?.[0] && (
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Provider</label>
+            {service.provider.url?.[0] ? (
               <a 
                 href={service.provider.url[0]} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-xs text-accent hover:underline flex items-center gap-1 mt-1"
+                className="mt-1 block text-base text-blue-400 hover:underline"
               >
-                <ExternalLink size={10} />
-                {service.provider.url[0]}
+                {service.provider.name}
               </a>
+            ) : (
+              <p className="mt-1 text-base text-foreground">{service.provider.name}</p>
             )}
           </div>
         )}
 
-        {/* Service Endpoints */}
+        {/* Authors */}
+        {component?.authors && component.authors.length > 0 && (
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Authors</label>
+            <div className="mt-1 space-y-0.5">
+              {component.authors.map((author, i) => (
+                <p key={i} className="text-base text-foreground">{author.name}</p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Endpoints (for services) */}
         {service?.endpoints && service.endpoints.length > 0 && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Endpoints</label>
-            <div className="mt-1.5 space-y-1">
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Endpoints</label>
+            <div className="mt-1 space-y-1">
               {service.endpoints.map((endpoint, i) => (
-                <p key={i} className="text-xs font-mono text-foreground/70 bg-secondary/30 rounded px-2 py-1 break-all">
+                <p key={i} className="text-base text-foreground/90 font-mono text-sm break-all">
                   {endpoint}
                 </p>
               ))}
@@ -120,148 +117,78 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
           </div>
         )}
 
-        {/* Authors */}
-        {component?.authors && component.authors.length > 0 && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Authors</label>
-            <p className="mt-1.5 text-sm text-foreground/80">
-              {component.authors.map(a => a.name).join(', ')}
-            </p>
-          </div>
-        )}
-
-        {/* License */}
-        {component?.licenses && component.licenses.length > 0 && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">License</label>
-            <div className="mt-1.5">
-              {component.licenses.map((lic, i) => (
-                <span key={i} className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-500/10 text-green-400 border border-green-500/30">
-                  {lic.license.id}
-                </span>
+        {/* Properties (for services) */}
+        {service?.properties && service.properties.length > 0 && (
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Properties</label>
+            <div className="mt-2 space-y-2">
+              {service.properties.map((prop, i) => (
+                <div key={i}>
+                  <span className="text-xs text-muted-foreground">{prop.name}</span>
+                  <p className="text-base text-foreground font-mono text-sm">{prop.value}</p>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Model Card */}
-        {component?.modelCard?.modelParameters && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Model Details</label>
-            <div className="mt-1.5 bg-secondary/30 border border-border/30 rounded-md p-3 space-y-2 text-xs">
-              {component.modelCard.modelParameters.task && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Task</span>
-                  <span className="text-foreground/80">{component.modelCard.modelParameters.task}</span>
-                </div>
-              )}
-              {component.modelCard.modelParameters.modelArchitecture && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Architecture</span>
-                  <span className="text-foreground/80">{component.modelCard.modelParameters.modelArchitecture}</span>
-                </div>
-              )}
-              {component.modelCard.modelParameters.architectureFamily && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Family</span>
-                  <span className="text-foreground/80">{component.modelCard.modelParameters.architectureFamily}</span>
-                </div>
-              )}
-              {component.modelCard.modelParameters.inputs && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inputs</span>
-                  <span className="text-foreground/80">
-                    {component.modelCard.modelParameters.inputs.map(i => i.format).join(', ')}
-                  </span>
-                </div>
-              )}
-              {component.modelCard.modelParameters.outputs && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Outputs</span>
-                  <span className="text-foreground/80">
-                    {component.modelCard.modelParameters.outputs.map(o => o.format).join(', ')}
-                  </span>
-                </div>
-              )}
+        {/* Occurrences (Code Evidence) */}
+        {component?.evidence?.occurrences && component.evidence.occurrences.length > 0 && (
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Occurrences</label>
+            <div className="mt-1 space-y-0.5">
+              {component.evidence.occurrences.map((occ, i) => (
+                <p key={i} className="text-base text-foreground">
+                  {occ.location}, line {occ.line}, column {occ.offset}
+                </p>
+              ))}
             </div>
           </div>
         )}
 
         {/* External References */}
         {component?.externalReferences && component.externalReferences.length > 0 && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">External References</label>
-            <div className="mt-1.5 space-y-1">
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">External references</label>
+            <div className="mt-1 space-y-1">
               {component.externalReferences.map((ref, i) => (
                 <a 
                   key={i}
                   href={ref.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-accent hover:underline"
+                  className="block text-base text-blue-400 hover:underline break-all"
                 >
-                  <ExternalLink size={10} />
-                  <span className="truncate">{ref.type}: {ref.url}</span>
+                  {ref.url}
                 </a>
               ))}
             </div>
           </div>
         )}
 
-        {/* Code Evidence / Occurrences */}
-        {component?.evidence?.occurrences && component.evidence.occurrences.length > 0 && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-              <FileCode size={10} />
-              Code Evidence
-            </label>
-            <div className="mt-1.5 space-y-2">
-              {component.evidence.occurrences.map((occ, i) => (
-                <div 
-                  key={i}
-                  className="flex items-start gap-2 p-2 rounded-md bg-secondary/30 border border-border/30"
-                >
-                  <MapPin size={12} className="text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-mono text-foreground/80 truncate">{occ.location}</p>
-                    <p className="text-[10px] text-muted-foreground">Line {occ.line}, offset {occ.offset}</p>
-                  </div>
-                </div>
+        {/* Licenses */}
+        {component?.licenses && component.licenses.length > 0 && (
+          <div className="border-t border-border/30 pt-5">
+            <label className="text-xs text-muted-foreground uppercase tracking-wider">Licenses</label>
+            <div className="mt-1 space-y-1">
+              {component.licenses.map((lic, i) => (
+                lic.license.url ? (
+                  <a 
+                    key={i}
+                    href={lic.license.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block text-base text-blue-400 hover:underline"
+                  >
+                    {lic.license.id}
+                  </a>
+                ) : (
+                  <p key={i} className="text-base text-foreground">{lic.license.id}</p>
+                )
               ))}
             </div>
           </div>
         )}
-
-        {/* Confidence */}
-        {component?.evidence?.identity?.[0]?.methods?.[0]?.confidence !== undefined && (
-          <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Detection Confidence</label>
-            <div className="mt-1.5 flex items-center gap-2">
-              <div className="flex-1 h-2 bg-secondary/50 rounded-full overflow-hidden">
-                <div 
-                  className="h-full rounded-full"
-                  style={{ 
-                    width: `${component.evidence.identity[0].methods[0].confidence * 100}%`,
-                    backgroundColor: config.color 
-                  }}
-                />
-              </div>
-              <span className="text-xs text-foreground/60">
-                {Math.round(component.evidence.identity[0].methods[0].confidence * 100)}%
-              </span>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              via {component.evidence.identity[0].methods[0].technique}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-border/50 bg-secondary/10">
-        <div className="text-[10px] text-muted-foreground">
-          CycloneDX AI-BOM v1.6
-        </div>
       </div>
     </div>
   );

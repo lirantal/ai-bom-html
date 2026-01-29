@@ -187,13 +187,13 @@ export default function App() {
               </pre>
             </div>
           )}
-        </main>
 
-        {/* Detail panel */}
-        <NodeDetailPanel 
-          node={selectedNode} 
-          onClose={() => setSelectedNode(null)} 
-        />
+          {/* Detail panel */}
+          <NodeDetailPanel 
+            node={selectedNode} 
+            onClose={() => setSelectedNode(null)} 
+          />
+        </main>
       </div>
     </div>
   );
