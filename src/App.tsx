@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Filter, Code2, Maximize2, Search, ChevronDown } from 'lucide-react';
 import { ConstellationGraph } from './components/constellation-graph';
 import { NodeDetailPanel } from './components/node-detail-panel';
-import { type GraphNode } from './lib/graph-data';
+import { type GraphNode, bomData, graphData } from './lib/graph-data';
 
 // Snyk Evo Logo Component
 function EvoLogo({ className = '' }: { className?: string }) {
@@ -49,6 +49,8 @@ export default function App() {
     { id: 'models', label: 'Models' },
     { id: 'agents', label: 'Agents' },
     { id: 'servers', label: 'MCP Servers' },
+    { id: 'libraries', label: 'Libraries' },
+    { id: 'services', label: 'Services' },
     { id: 'tools', label: 'Tools & Resources' },
   ];
 
@@ -147,33 +149,32 @@ export default function App() {
           {/* Stats overlay */}
           <div className="absolute top-4 left-4 flex gap-2">
             <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-              <div className="text-lg font-semibold text-foreground">16</div>
+              <div className="text-lg font-semibold text-foreground">{graphData.nodes.length}</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Components</div>
             </div>
             <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-              <div className="text-lg font-semibold text-cyan-400">14</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Active</div>
+              <div className="text-lg font-semibold text-green-400">{graphData.nodes.filter(n => n.type === 'model').length}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Models</div>
             </div>
             <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-              <div className="text-lg font-semibold text-amber-400">1</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Warnings</div>
+              <div className="text-lg font-semibold text-purple-400">{graphData.nodes.filter(n => n.type === 'mcp-server' || n.type === 'mcp-client').length}</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">MCP</div>
             </div>
           </div>
 
-          {/* Issues summary - Snyk style */}
+          {/* Spec version pill */}
           <div className="absolute top-4 right-80 flex items-center gap-1.5 bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-2">Issues</span>
-            <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">C 1</span>
-            <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded text-xs font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30">H 6</span>
-            <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">M 6</span>
-            <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">L 3</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">CycloneDX</span>
+            <span className="inline-flex items-center justify-center px-2 h-5 rounded text-xs font-medium bg-accent/20 text-accent border border-accent/30">
+              v{bomData.specVersion}
+            </span>
           </div>
 
           {/* JSON panel */}
           {showJSON && (
-            <div className="absolute bottom-4 left-4 right-4 max-h-64 bg-card/90 backdrop-blur-md border border-border/50 rounded-md overflow-hidden">
+            <div className="absolute bottom-4 left-4 right-4 max-h-80 bg-card/90 backdrop-blur-md border border-border/50 rounded-md overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-secondary/20">
-                <span className="text-xs font-medium text-foreground">Component Tree (JSON)</span>
+                <span className="text-xs font-medium text-foreground">Raw CycloneDX AI-BOM</span>
                 <button 
                   onClick={() => setShowJSON(false)}
                   className="text-muted-foreground hover:text-foreground transition-colors"
@@ -181,25 +182,8 @@ export default function App() {
                   <Code2 className="w-4 h-4" />
                 </button>
               </div>
-              <pre className="p-3 text-xs font-mono text-muted-foreground overflow-auto max-h-48">
-{`{
-  "application": "AI BOM Scanner",
-  "version": "1.0.0",
-  "scanned": "2024-01-15T10:30:00Z",
-  "components": {
-    "models": ["gpt-3.5-turbo", "deepseek-reasoner", "gpt-4o-mini", "bge-vqa-base", "whisper-medium"],
-    "agents": ["agents.Agent", "create"],
-    "mcp_servers": ["localhost:8000/sse", "DemoServer"],
-    "libraries": ["openai@4.52.0", "transformers@4.40.0"],
-    "services": ["deepseek"]
-  },
-  "issues": {
-    "critical": 1,
-    "high": 6,
-    "medium": 6,
-    "low": 3
-  }
-}`}
+              <pre className="p-3 text-xs font-mono text-green-400 overflow-auto max-h-64">
+                {JSON.stringify(bomData, null, 2)}
               </pre>
             </div>
           )}

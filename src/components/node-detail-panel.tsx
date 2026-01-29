@@ -1,31 +1,22 @@
-import { X, ExternalLink, ShieldCheck } from 'lucide-react';
-import { type GraphNode, nodeTypeConfig, severityColors } from '../lib/graph-data';
+import { X, ExternalLink, FileCode, MapPin } from 'lucide-react';
+import { type GraphNode, nodeTypeConfig, type BomComponent, type BomService } from '../lib/graph-data';
 
 interface NodeDetailPanelProps {
   node: GraphNode | null;
   onClose: () => void;
 }
 
+function isComponent(raw: BomComponent | BomService): raw is BomComponent {
+  return 'evidence' in raw || 'modelCard' in raw || 'licenses' in raw;
+}
+
 export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
   if (!node) return null;
 
   const config = nodeTypeConfig[node.type];
-  const statusColors = {
-    active: { bg: 'bg-cyan-500/15', text: 'text-cyan-400', border: 'border-cyan-500/30', label: 'Active' },
-    warning: { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30', label: 'Warning' },
-    inactive: { bg: 'bg-neutral-500/15', text: 'text-neutral-400', border: 'border-neutral-500/30', label: 'Inactive' },
-  };
-
-  const status = node.metadata?.status || 'active';
-  const statusStyle = statusColors[status];
-
-  // Mock issues for demo
-  const mockIssues = node.type === 'model' ? [
-    { severity: 'high', title: 'Potential prompt injection vulnerability' },
-    { severity: 'medium', title: 'Model version outdated' },
-  ] : node.type === 'library' ? [
-    { severity: 'low', title: 'Dependency update available' },
-  ] : [];
+  const raw = node.raw;
+  const component = isComponent(raw) ? raw : null;
+  const service = !isComponent(raw) ? raw : null;
 
   return (
     <div className="w-80 bg-card/90 backdrop-blur-md border-l border-border/50 h-full flex flex-col">
@@ -44,7 +35,7 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
           </div>
           <div>
             <h3 className="font-medium text-foreground">{node.label}</h3>
-            <p className="text-xs text-muted-foreground capitalize">{node.type.replace('-', ' ')}</p>
+            <p className="text-xs text-muted-foreground">{config.label}</p>
           </div>
         </div>
         <button
@@ -57,93 +48,219 @@ export function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Status */}
+        {/* Full Name */}
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</label>
-          <div className="mt-1.5">
-            <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {statusStyle.label}
-            </span>
-          </div>
+          <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Asset Name</label>
+          <p className="mt-1.5 text-sm font-medium text-foreground break-all">{node.fullName}</p>
         </div>
 
-        {/* Description */}
-        {node.metadata?.description && (
+        {/* BOM Reference */}
+        <div>
+          <label className="text-[10px] text-muted-foreground uppercase tracking-wider">BOM Reference</label>
+          <p className="mt-1.5 text-xs font-mono text-foreground/60 bg-secondary/30 border border-border/30 rounded-md px-2 py-1.5 break-all">
+            {node.id}
+          </p>
+        </div>
+
+        {/* Manufacturer / Publisher / Provider */}
+        {component?.manufacturer && (
           <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Description</label>
-            <p className="mt-1.5 text-sm text-foreground/80">{node.metadata.description}</p>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Manufacturer</label>
+            <p className="mt-1.5 text-sm text-foreground/80">{component.manufacturer.name}</p>
+            {component.manufacturer.url?.[0] && (
+              <a 
+                href={component.manufacturer.url[0]} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-accent hover:underline flex items-center gap-1 mt-1"
+              >
+                <ExternalLink size={10} />
+                {component.manufacturer.url[0]}
+              </a>
+            )}
           </div>
         )}
 
-        {/* Version */}
-        {node.metadata?.version && (
+        {component?.publisher && (
           <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Version</label>
-            <p className="mt-1.5 text-sm font-mono text-foreground/80">{node.metadata.version}</p>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Publisher</label>
+            <p className="mt-1.5 text-sm text-foreground/80">{component.publisher}</p>
           </div>
         )}
 
-        {/* Issues - Snyk style */}
-        {mockIssues.length > 0 && (
+        {service?.provider && (
           <div>
-            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Issues</label>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Provider</label>
+            <p className="mt-1.5 text-sm text-foreground/80">{service.provider.name}</p>
+            {service.provider.url?.[0] && (
+              <a 
+                href={service.provider.url[0]} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-accent hover:underline flex items-center gap-1 mt-1"
+              >
+                <ExternalLink size={10} />
+                {service.provider.url[0]}
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Service Endpoints */}
+        {service?.endpoints && service.endpoints.length > 0 && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Endpoints</label>
+            <div className="mt-1.5 space-y-1">
+              {service.endpoints.map((endpoint, i) => (
+                <p key={i} className="text-xs font-mono text-foreground/70 bg-secondary/30 rounded px-2 py-1 break-all">
+                  {endpoint}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Authors */}
+        {component?.authors && component.authors.length > 0 && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Authors</label>
+            <p className="mt-1.5 text-sm text-foreground/80">
+              {component.authors.map(a => a.name).join(', ')}
+            </p>
+          </div>
+        )}
+
+        {/* License */}
+        {component?.licenses && component.licenses.length > 0 && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">License</label>
+            <div className="mt-1.5">
+              {component.licenses.map((lic, i) => (
+                <span key={i} className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-500/10 text-green-400 border border-green-500/30">
+                  {lic.license.id}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Model Card */}
+        {component?.modelCard?.modelParameters && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Model Details</label>
+            <div className="mt-1.5 bg-secondary/30 border border-border/30 rounded-md p-3 space-y-2 text-xs">
+              {component.modelCard.modelParameters.task && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Task</span>
+                  <span className="text-foreground/80">{component.modelCard.modelParameters.task}</span>
+                </div>
+              )}
+              {component.modelCard.modelParameters.modelArchitecture && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Architecture</span>
+                  <span className="text-foreground/80">{component.modelCard.modelParameters.modelArchitecture}</span>
+                </div>
+              )}
+              {component.modelCard.modelParameters.architectureFamily && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Family</span>
+                  <span className="text-foreground/80">{component.modelCard.modelParameters.architectureFamily}</span>
+                </div>
+              )}
+              {component.modelCard.modelParameters.inputs && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Inputs</span>
+                  <span className="text-foreground/80">
+                    {component.modelCard.modelParameters.inputs.map(i => i.format).join(', ')}
+                  </span>
+                </div>
+              )}
+              {component.modelCard.modelParameters.outputs && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Outputs</span>
+                  <span className="text-foreground/80">
+                    {component.modelCard.modelParameters.outputs.map(o => o.format).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* External References */}
+        {component?.externalReferences && component.externalReferences.length > 0 && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">External References</label>
+            <div className="mt-1.5 space-y-1">
+              {component.externalReferences.map((ref, i) => (
+                <a 
+                  key={i}
+                  href={ref.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs text-accent hover:underline"
+                >
+                  <ExternalLink size={10} />
+                  <span className="truncate">{ref.type}: {ref.url}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Code Evidence / Occurrences */}
+        {component?.evidence?.occurrences && component.evidence.occurrences.length > 0 && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+              <FileCode size={10} />
+              Code Evidence
+            </label>
             <div className="mt-1.5 space-y-2">
-              {mockIssues.map((issue, i) => (
+              {component.evidence.occurrences.map((occ, i) => (
                 <div 
                   key={i}
                   className="flex items-start gap-2 p-2 rounded-md bg-secondary/30 border border-border/30"
                 >
-                  <div 
-                    className="w-5 h-5 rounded flex items-center justify-center text-xs font-medium shrink-0 mt-0.5"
-                    style={{ 
-                      backgroundColor: `${severityColors[issue.severity as keyof typeof severityColors]}20`,
-                      color: severityColors[issue.severity as keyof typeof severityColors],
-                      borderWidth: 1,
-                      borderColor: `${severityColors[issue.severity as keyof typeof severityColors]}40`,
-                    }}
-                  >
-                    {issue.severity[0].toUpperCase()}
+                  <MapPin size={12} className="text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-mono text-foreground/80 truncate">{occ.location}</p>
+                    <p className="text-[10px] text-muted-foreground">Line {occ.line}, offset {occ.offset}</p>
                   </div>
-                  <span className="text-xs text-foreground/70">{issue.title}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Component ID */}
-        <div>
-          <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Component ID</label>
-          <p className="mt-1.5 text-xs font-mono text-foreground/50 bg-secondary/30 border border-border/30 rounded-md px-2 py-1.5">{node.id}</p>
-        </div>
-
-        {/* Actions */}
-        <div className="pt-4 border-t border-border/50 space-y-2">
-          <button className="w-full px-3 py-2 bg-secondary/40 hover:bg-secondary/60 border border-border/50 rounded-md text-sm text-foreground/80 transition-colors flex items-center justify-center gap-2">
-            <ShieldCheck size={14} />
-            View Dependencies
-          </button>
-          <button 
-            className="w-full px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-center gap-2"
-            style={{ 
-              background: `linear-gradient(135deg, ${config.color}15, ${config.color}08)`,
-              borderWidth: 1,
-              borderColor: `${config.color}30`,
-              color: config.color,
-            }}
-          >
-            <ExternalLink size={14} />
-            Inspect Component
-          </button>
-        </div>
+        {/* Confidence */}
+        {component?.evidence?.identity?.[0]?.methods?.[0]?.confidence !== undefined && (
+          <div>
+            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Detection Confidence</label>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-secondary/50 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full"
+                  style={{ 
+                    width: `${component.evidence.identity[0].methods[0].confidence * 100}%`,
+                    backgroundColor: config.color 
+                  }}
+                />
+              </div>
+              <span className="text-xs text-foreground/60">
+                {Math.round(component.evidence.identity[0].methods[0].confidence * 100)}%
+              </span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              via {component.evidence.identity[0].methods[0].technique}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
       <div className="p-4 border-t border-border/50 bg-secondary/10">
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>Last scanned</span>
-          <span>16 hours ago</span>
+        <div className="text-[10px] text-muted-foreground">
+          CycloneDX AI-BOM v1.6
         </div>
       </div>
     </div>

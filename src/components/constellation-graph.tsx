@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { graphData, nodeTypeConfig, type GraphNode } from '../lib/graph-data';
+import { graphData, nodeTypeConfig, type GraphNode, type NodeType } from '../lib/graph-data';
 
 interface NodePosition {
   x: number;
@@ -37,7 +37,9 @@ export function ConstellationGraph({
       if (filter === 'models') return node.type === 'model';
       if (filter === 'agents') return node.type === 'agent';
       if (filter === 'servers') return node.type === 'mcp-server' || node.type === 'mcp-client';
-      if (filter === 'tools') return node.type === 'tool' || node.type === 'resource';
+      if (filter === 'tools') return node.type === 'tool' || node.type === 'mcp-resource';
+      if (filter === 'libraries') return node.type === 'library';
+      if (filter === 'services') return node.type === 'service';
       return true;
     });
   }, [filter]);
@@ -55,8 +57,8 @@ export function ConstellationGraph({
       nodesByType[node.type].push(node);
     });
 
-    // Position root at center
-    const rootNode = filteredNodes.find(n => n.type === 'root');
+    // Position root/application at center
+    const rootNode = filteredNodes.find(n => n.type === 'application' && n.id.includes('Root'));
     if (rootNode) {
       positions.push({
         x: centerX,
@@ -69,11 +71,11 @@ export function ConstellationGraph({
     }
 
     // Position other nodes in orbital rings
-    const typeOrder = ['mcp-client', 'mcp-server', 'agent', 'model', 'library', 'service', 'resource', 'tool'];
+    const typeOrder: NodeType[] = ['mcp-client', 'mcp-server', 'agent', 'model', 'library', 'service', 'mcp-resource', 'tool', 'data'];
     let ringIndex = 0;
     
     typeOrder.forEach(type => {
-      const nodes = nodesByType[type];
+      const nodes = nodesByType[type]?.filter(n => n !== rootNode);
       if (!nodes?.length) return;
       
       ringIndex++;
@@ -93,6 +95,27 @@ export function ConstellationGraph({
         });
       });
     });
+
+    // Add any application nodes that aren't root
+    const otherApps = nodesByType['application']?.filter(n => n !== rootNode);
+    if (otherApps?.length) {
+      ringIndex++;
+      const ringRadius = 80 + ringIndex * 90;
+      const angleStep = (2 * Math.PI) / Math.max(otherApps.length, 6);
+      const startAngle = (ringIndex * Math.PI) / 7;
+
+      otherApps.forEach((node, i) => {
+        const angle = startAngle + i * angleStep;
+        positions.push({
+          x: centerX + Math.cos(angle) * ringRadius,
+          y: centerY + Math.sin(angle) * ringRadius,
+          node,
+          scale: 1,
+          angle,
+          radius: ringRadius,
+        });
+      });
+    }
 
     return positions;
   }, [filteredNodes, dimensions]);
@@ -132,8 +155,8 @@ export function ConstellationGraph({
     canvas.height = dimensions.height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Clear canvas with Snyk Evo dark background
-    ctx.fillStyle = '#0a0a0f';
+    // Clear canvas with dark background
+    ctx.fillStyle = '#09090b';
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
     
     // Add subtle gradient overlay (purple to orange ambient)
@@ -141,8 +164,8 @@ export function ConstellationGraph({
       dimensions.width * 0.2, dimensions.height * 0.3, 0,
       dimensions.width * 0.5, dimensions.height * 0.5, dimensions.width * 0.8
     );
-    ambientGradient.addColorStop(0, 'rgba(139, 92, 246, 0.03)');
-    ambientGradient.addColorStop(0.5, 'rgba(219, 39, 119, 0.02)');
+    ambientGradient.addColorStop(0, 'rgba(192, 38, 211, 0.03)');
+    ambientGradient.addColorStop(0.5, 'rgba(124, 58, 237, 0.02)');
     ambientGradient.addColorStop(1, 'rgba(249, 115, 22, 0.01)');
     ctx.fillStyle = ambientGradient;
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
@@ -153,32 +176,30 @@ export function ConstellationGraph({
     ctx.scale(zoom, zoom);
     ctx.translate(-dimensions.width / 2 + pan.x, -dimensions.height / 2 + pan.y);
 
-    // Draw subtle grid with brand tint
-    ctx.strokeStyle = 'rgba(192, 132, 252, 0.015)';
+    // Draw subtle grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 1;
-    for (let i = 0; i < dimensions.width; i += 50) {
+    for (let i = 0; i < dimensions.width; i += 40) {
       ctx.beginPath();
       ctx.moveTo(i, 0);
       ctx.lineTo(i, dimensions.height);
       ctx.stroke();
     }
-    for (let i = 0; i < dimensions.height; i += 50) {
+    for (let i = 0; i < dimensions.height; i += 40) {
       ctx.beginPath();
       ctx.moveTo(0, i);
       ctx.lineTo(dimensions.width, i);
       ctx.stroke();
     }
 
-    // Draw orbital rings with gradient colors
+    // Draw orbital rings
     const centerX = dimensions.width / 2;
     const centerY = dimensions.height / 2;
     for (let i = 1; i <= 8; i++) {
       const radius = 80 + i * 90;
       ctx.beginPath();
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      // Gradient from purple to orange based on ring index
-      const hue = 280 - (i * 20); // Purple (280) to orange (40)
-      ctx.strokeStyle = `hsla(${hue}, 70%, 60%, ${0.06 - i * 0.006})`;
+      ctx.strokeStyle = `rgba(255,255,255,${0.04 - i * 0.004})`;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -252,8 +273,9 @@ export function ConstellationGraph({
       const config = nodeTypeConfig[pos.node.type];
       const isHovered = hoveredNode === pos.node.id;
       const isSelected = selectedNodeId === pos.node.id;
+      const isRoot = pos.node.type === 'application' && pos.node.id.includes('Root');
       const scale = pos.scale * (isHovered || isSelected ? 1.2 : 1);
-      const baseSize = pos.node.type === 'root' ? 28 : 20;
+      const baseSize = isRoot ? 28 : 20;
       const size = baseSize * scale;
 
       // Glow effect
@@ -297,19 +319,6 @@ export function ConstellationGraph({
       ctx.arc(pos.x, pos.y, size - 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Status indicator
-      const status = pos.node.metadata?.status;
-      if (status) {
-        const statusColor = 
-          status === 'active' ? '#34d399' : 
-          status === 'warning' ? '#fbbf24' : 
-          '#6b7280';
-        ctx.beginPath();
-        ctx.arc(pos.x + size * 0.6, pos.y - size * 0.6, 4, 0, Math.PI * 2);
-        ctx.fillStyle = statusColor;
-        ctx.fill();
-      }
-
       // Icon/symbol in center
       ctx.fillStyle = config.color;
       ctx.font = `${size * 0.6}px sans-serif`;
@@ -321,11 +330,8 @@ export function ConstellationGraph({
       ctx.fillStyle = isHovered || isSelected ? '#ffffff' : 'rgba(255,255,255,0.7)';
       ctx.font = `${isHovered || isSelected ? '12px' : '10px'} sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(
-        pos.node.label.length > 16 ? pos.node.label.slice(0, 14) + '...' : pos.node.label,
-        pos.x,
-        pos.y + size + 12
-      );
+      const displayLabel = pos.node.label.length > 18 ? pos.node.label.slice(0, 16) + '...' : pos.node.label;
+      ctx.fillText(displayLabel, pos.x, pos.y + size + 12);
     });
 
     ctx.restore();
@@ -352,7 +358,8 @@ export function ConstellationGraph({
     const y = (clientY - rect.top - dimensions.height / 2) / zoom + dimensions.height / 2 - pan.y;
 
     for (const pos of nodePositions) {
-      const size = pos.node.type === 'root' ? 28 : 20;
+      const isRoot = pos.node.type === 'application' && pos.node.id.includes('Root');
+      const size = isRoot ? 28 : 20;
       const dx = pos.x - x;
       const dy = pos.y - y;
       if (dx * dx + dy * dy < size * size) {
@@ -448,10 +455,10 @@ export function ConstellationGraph({
       <div className="absolute top-4 right-4 bg-card/80 backdrop-blur-sm rounded-lg p-3 border border-border/50">
         <div className="text-xs text-muted-foreground mb-2">Components</div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-          {Object.entries(nodeTypeConfig).slice(1).map(([type, config]) => (
+          {Object.entries(nodeTypeConfig).map(([type, config]) => (
             <div key={type} className="flex items-center gap-2 text-xs">
               <span style={{ color: config.color }}>{config.icon}</span>
-              <span className="text-foreground/70 capitalize">{type.replace('-', ' ')}</span>
+              <span className="text-foreground/70">{config.label}</span>
             </div>
           ))}
         </div>

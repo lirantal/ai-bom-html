@@ -1,169 +1,227 @@
+// CycloneDX AI-BOM Types
+export interface BomEvidence {
+  identity?: Array<{
+    field: string;
+    methods: Array<{ confidence: number; technique: string }>;
+  }>;
+  occurrences?: Array<{
+    line: number;
+    location: string;
+    offset: number;
+  }>;
+}
+
+export interface BomComponent {
+  'bom-ref': string;
+  name: string;
+  type: string;
+  evidence?: BomEvidence;
+  externalReferences?: Array<{ type: string; url: string }>;
+  manufacturer?: { name: string; url?: string[] };
+  publisher?: string;
+  authors?: Array<{ name: string }>;
+  licenses?: Array<{ license: { id: string; url?: string } }>;
+  modelCard?: {
+    modelParameters?: {
+      approach?: { type: string };
+      architectureFamily?: string;
+      modelArchitecture?: string;
+      task?: string;
+      inputs?: Array<{ format: string }>;
+      outputs?: Array<{ format: string }>;
+    };
+  };
+}
+
+export interface BomService {
+  'bom-ref': string;
+  name: string;
+  endpoints?: string[];
+  provider?: { name: string; url?: string[] };
+  properties?: Array<{ name: string; value: string }>;
+}
+
+export interface BomDependency {
+  ref: string;
+  dependsOn?: string[];
+}
+
+export interface CycloneDXBom {
+  $schema?: string;
+  bomFormat: string;
+  specVersion: string;
+  version: number;
+  metadata?: {
+    manufacturer?: { name: string; url?: string[] };
+  };
+  components: BomComponent[];
+  services?: BomService[];
+  dependencies: BomDependency[];
+}
+
+// Derived node type from bom-ref prefix
 export type NodeType = 
-  | 'root'
-  | 'mcp-client'
-  | 'mcp-server'
-  | 'agent'
   | 'model'
+  | 'agent'
   | 'library'
+  | 'mcp-server'
+  | 'mcp-client'
+  | 'mcp-resource'
+  | 'tool'
   | 'service'
-  | 'resource'
-  | 'tool';
+  | 'application'
+  | 'data';
 
 export interface GraphNode {
   id: string;
   label: string;
+  fullName: string;
   type: NodeType;
-  children?: string[];
-  metadata?: {
-    version?: string;
-    status?: 'active' | 'inactive' | 'warning';
-    description?: string;
-  };
+  raw: BomComponent | BomService;
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
 }
 
 export interface GraphData {
   nodes: GraphNode[];
-  edges: { from: string; to: string }[];
+  edges: GraphEdge[];
 }
 
-export const graphData: GraphData = {
-  nodes: [
-    {
-      id: 'app-root',
-      label: 'Application Root',
-      type: 'root',
-      metadata: { status: 'active', description: 'Main application entry point' },
-    },
-    {
-      id: 'mcp-client-1',
-      label: 'MCPServerSessions',
-      type: 'mcp-client',
-      metadata: { status: 'active', description: 'MCP Client session manager' },
-    },
-    {
-      id: 'mcp-server-1',
-      label: 'localhost:8000/sse',
-      type: 'mcp-server',
-      metadata: { status: 'active', description: 'Local SSE server' },
-    },
-    {
-      id: 'mcp-server-2',
-      label: 'DemoServer',
-      type: 'mcp-server',
-      metadata: { status: 'active', description: 'Demo MCP server' },
-    },
-    {
-      id: 'agent-1',
-      label: 'agents.Agent',
-      type: 'agent',
-      metadata: { status: 'active', description: 'Primary agent instance' },
-    },
-    {
-      id: 'agent-2',
-      label: 'create',
-      type: 'agent',
-      metadata: { status: 'active', description: 'Agent factory' },
-    },
-    {
-      id: 'model-1',
-      label: 'gpt-3.5-turbo',
-      type: 'model',
-      metadata: { version: '0613', status: 'active', description: 'OpenAI GPT-3.5 Turbo' },
-    },
-    {
-      id: 'model-2',
-      label: 'deepseek-reasoner',
-      type: 'model',
-      metadata: { status: 'active', description: 'DeepSeek reasoning model' },
-    },
-    {
-      id: 'model-3',
-      label: 'gpt-4o-mini',
-      type: 'model',
-      metadata: { status: 'active', description: 'OpenAI GPT-4o Mini' },
-    },
-    {
-      id: 'model-4',
-      label: 'bge-vqa-base',
-      type: 'model',
-      metadata: { status: 'warning', description: 'Salesforce BGE VQA model' },
-    },
-    {
-      id: 'model-5',
-      label: 'whisper-medium',
-      type: 'model',
-      metadata: { status: 'inactive', description: 'OpenAI Whisper medium' },
-    },
-    {
-      id: 'library-1',
-      label: 'openai',
-      type: 'library',
-      metadata: { version: '4.52.0', status: 'active', description: 'OpenAI SDK' },
-    },
-    {
-      id: 'library-2',
-      label: 'transformers',
-      type: 'library',
-      metadata: { version: '4.40.0', status: 'active', description: 'Hugging Face Transformers' },
-    },
-    {
-      id: 'service-1',
-      label: 'deepseek',
-      type: 'service',
-      metadata: { status: 'active', description: 'DeepSeek API service' },
-    },
-    {
-      id: 'resource-1',
-      label: 'get_greeting',
-      type: 'resource',
-      metadata: { status: 'active', description: 'Greeting resource endpoint' },
-    },
-    {
-      id: 'tool-1',
-      label: 'add',
-      type: 'tool',
-      metadata: { status: 'active', description: 'Addition tool' },
-    },
-  ],
-  edges: [
-    { from: 'app-root', to: 'mcp-client-1' },
-    { from: 'mcp-client-1', to: 'mcp-server-1' },
-    { from: 'mcp-server-1', to: 'agent-1' },
-    { from: 'mcp-server-1', to: 'agent-2' },
-    { from: 'app-root', to: 'mcp-server-2' },
-    { from: 'mcp-server-2', to: 'resource-1' },
-    { from: 'mcp-server-2', to: 'tool-1' },
-    { from: 'app-root', to: 'model-1' },
-    { from: 'app-root', to: 'model-2' },
-    { from: 'app-root', to: 'model-3' },
-    { from: 'app-root', to: 'model-4' },
-    { from: 'app-root', to: 'model-5' },
-    { from: 'app-root', to: 'library-1' },
-    { from: 'app-root', to: 'library-2' },
-    { from: 'app-root', to: 'service-1' },
-    { from: 'model-1', to: 'library-1' },
-    { from: 'model-3', to: 'library-1' },
-    { from: 'model-2', to: 'service-1' },
-  ],
+// Parse bom-ref to determine node type
+export function getNodeType(bomRef: string): NodeType {
+  if (bomRef.startsWith('model:')) return 'model';
+  if (bomRef.startsWith('agent:')) return 'agent';
+  if (bomRef.startsWith('pkg:')) return 'library';
+  if (bomRef.startsWith('mcp-server:')) return 'mcp-server';
+  if (bomRef.startsWith('mcp-client:')) return 'mcp-client';
+  if (bomRef.startsWith('mcp-resource:')) return 'mcp-resource';
+  if (bomRef.startsWith('tool:')) return 'tool';
+  if (bomRef.startsWith('service:')) return 'service';
+  if (bomRef.startsWith('application:')) return 'application';
+  return 'data';
+}
+
+// Convert CycloneDX BOM to graph data
+export function bomToGraphData(bom: CycloneDXBom): GraphData {
+  const nodes: GraphNode[] = [];
+  const edges: GraphEdge[] = [];
+
+  // Add components as nodes
+  for (const component of bom.components) {
+    const type = getNodeType(component['bom-ref']);
+    nodes.push({
+      id: component['bom-ref'],
+      label: component.name.split('/').pop() || component.name,
+      fullName: component.name,
+      type,
+      raw: component,
+    });
+  }
+
+  // Add services as nodes
+  if (bom.services) {
+    for (const service of bom.services) {
+      nodes.push({
+        id: service['bom-ref'],
+        label: service.name,
+        fullName: service.name,
+        type: 'service',
+        raw: service,
+      });
+    }
+  }
+
+  // Add dependencies as edges
+  for (const dep of bom.dependencies) {
+    if (dep.dependsOn) {
+      for (const target of dep.dependsOn) {
+        edges.push({ from: dep.ref, to: target });
+      }
+    }
+  }
+
+  return { nodes, edges };
+}
+
+// Node type visual configuration
+export const nodeTypeConfig: Record<NodeType, { color: string; bgColor: string; borderColor: string; icon: string; label: string }> = {
+  'model': { 
+    color: '#22c55e', 
+    bgColor: 'rgba(34,197,94,0.12)', 
+    borderColor: 'rgba(34,197,94,0.35)', 
+    icon: '◉',
+    label: 'Model'
+  },
+  'agent': { 
+    color: '#3b82f6', 
+    bgColor: 'rgba(59,130,246,0.12)', 
+    borderColor: 'rgba(59,130,246,0.35)', 
+    icon: '●',
+    label: 'Agent'
+  },
+  'library': { 
+    color: '#ec4899', 
+    bgColor: 'rgba(236,72,153,0.12)', 
+    borderColor: 'rgba(236,72,153,0.35)', 
+    icon: '◈',
+    label: 'Library'
+  },
+  'mcp-server': { 
+    color: '#a855f7', 
+    bgColor: 'rgba(168,85,247,0.12)', 
+    borderColor: 'rgba(168,85,247,0.35)', 
+    icon: '⬢',
+    label: 'MCP Server'
+  },
+  'mcp-client': { 
+    color: '#c084fc', 
+    bgColor: 'rgba(192,132,252,0.12)', 
+    borderColor: 'rgba(192,132,252,0.35)', 
+    icon: '⬡',
+    label: 'MCP Client'
+  },
+  'mcp-resource': { 
+    color: '#06b6d4', 
+    bgColor: 'rgba(6,182,212,0.12)', 
+    borderColor: 'rgba(6,182,212,0.35)', 
+    icon: '▣',
+    label: 'MCP Resource'
+  },
+  'tool': { 
+    color: '#f59e0b', 
+    bgColor: 'rgba(245,158,11,0.12)', 
+    borderColor: 'rgba(245,158,11,0.35)', 
+    icon: '⚙',
+    label: 'Tool'
+  },
+  'service': { 
+    color: '#ef4444', 
+    bgColor: 'rgba(239,68,68,0.12)', 
+    borderColor: 'rgba(239,68,68,0.35)', 
+    icon: '◎',
+    label: 'Service'
+  },
+  'application': { 
+    color: '#ffffff', 
+    bgColor: 'rgba(255,255,255,0.08)', 
+    borderColor: 'rgba(255,255,255,0.25)', 
+    icon: '◆',
+    label: 'Application'
+  },
+  'data': { 
+    color: '#06b6d4', 
+    bgColor: 'rgba(6,182,212,0.12)', 
+    borderColor: 'rgba(6,182,212,0.35)', 
+    icon: '▤',
+    label: 'Data'
+  },
 };
 
-// Snyk Evo brand colors - magenta/purple to orange gradient palette
-export const nodeTypeConfig: Record<NodeType, { color: string; bgColor: string; borderColor: string; icon: string }> = {
-  'root': { color: '#ffffff', bgColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.25)', icon: '◆' },
-  'mcp-client': { color: '#c084fc', bgColor: 'rgba(192,132,252,0.12)', borderColor: 'rgba(192,132,252,0.35)', icon: '⬡' },
-  'mcp-server': { color: '#e879f9', bgColor: 'rgba(232,121,249,0.12)', borderColor: 'rgba(232,121,249,0.35)', icon: '⬢' },
-  'agent': { color: '#22d3ee', bgColor: 'rgba(34,211,238,0.12)', borderColor: 'rgba(34,211,238,0.35)', icon: '●' },
-  'model': { color: '#f472b6', bgColor: 'rgba(244,114,182,0.12)', borderColor: 'rgba(244,114,182,0.35)', icon: '◉' },
-  'library': { color: '#a78bfa', bgColor: 'rgba(167,139,250,0.12)', borderColor: 'rgba(167,139,250,0.35)', icon: '◈' },
-  'service': { color: '#fb923c', bgColor: 'rgba(251,146,60,0.12)', borderColor: 'rgba(251,146,60,0.35)', icon: '◎' },
-  'resource': { color: '#facc15', bgColor: 'rgba(250,204,21,0.12)', borderColor: 'rgba(250,204,21,0.35)', icon: '▣' },
-  'tool': { color: '#f97316', bgColor: 'rgba(249,115,22,0.12)', borderColor: 'rgba(249,115,22,0.35)', icon: '⚙' },
-};
+// The actual AI-BOM data (CycloneDX format)
+export const bomData: CycloneDXBom = {"$schema":"https://cyclonedx.org/schema/bom-1.6.schema.json","bomFormat":"CycloneDX","components":[{"bom-ref":"agent:agents.Agent","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":9,"location":"mcp/mcp-client.py","offset":13}]},"name":"agents.Agent","type":"application"},{"bom-ref":"agent:create","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":21,"location":"main.py","offset":18}]},"name":"create","type":"application"},{"bom-ref":"application:Root","name":"Root","type":"application"},{"bom-ref":"mcp-client:agents.mcp.MCPServerSse-http://localhost:8000/sse","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":28,"location":"mcp/mcp-client.py","offset":16}]},"name":"agents.mcp.MCPServerSse http://localhost:8000/sse","type":"application"},{"bom-ref":"mcp-resource:get_greeting","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":11,"location":"mcp/mcp-server.py","offset":2}]},"name":"get_greeting","type":"data"},{"bom-ref":"mcp-server:DemoServer","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":3,"location":"mcp/mcp-server.py","offset":7},{"line":5,"location":"mcp/mcp-server.py","offset":2},{"line":11,"location":"mcp/mcp-server.py","offset":2}]},"name":"DemoServer","type":"application"},{"bom-ref":"mcp-server:http://localhost:8000/sse","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":28,"location":"mcp/mcp-client.py","offset":16}]},"name":"http://localhost:8000/sse","type":"application"},{"authors":[{"name":"Junnan Li"},{"name":"Dongxu Li"},{"name":"Caiming Xiong"},{"name":"Steven Hoi"}],"bom-ref":"model:Salesforce/blip-vqa-base","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":8,"location":"blip.py","offset":13},{"line":8,"location":"blip.py","offset":43},{"line":9,"location":"blip.py","offset":9},{"line":9,"location":"blip.py","offset":50}]},"externalReferences":[{"type":"model-card","url":"https://huggingface.co/Salesforce/blip-vqa-base"}],"licenses":[{"license":{"id":"BSD-3-Clause","url":"https://spdx.org/licenses/BSD-3-Clause.html"}}],"modelCard":{"modelParameters":{"approach":{"type":"self-supervised"},"architectureFamily":"transformer","inputs":[{"format":"image"},{"format":"text"}],"modelArchitecture":"BLIP","outputs":[{"format":"text"}],"task":"visual-question-answering"}},"name":"Salesforce/blip-vqa-base","publisher":"Hugging Face Inc","type":"machine-learning-model"},{"bom-ref":"model:deepseek-reasoner","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.3,"technique":"source-code-analysis"}]}],"occurrences":[{"line":13,"location":"chat.py","offset":14}]},"externalReferences":[{"type":"website","url":"https://api-docs.deepseek.com/api/list-models"}],"manufacturer":{"name":"Hangzhou DeepSeek AI Co., Ltd.","url":["https://deepseek.ai"]},"name":"deepseek-reasoner","type":"machine-learning-model"},{"bom-ref":"model:gpt-3.5-turbo","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":13,"location":"mcp/mcp-client.py","offset":24},{"line":13,"location":"mcp/mcp-client.py","offset":44}]},"externalReferences":[{"type":"website","url":"https://platform.openai.com/docs/models/gpt-3.5-turbo"}],"manufacturer":{"name":"OpenAI, Inc.","url":["https://openai.com"]},"name":"gpt-3.5-turbo","type":"machine-learning-model"},{"bom-ref":"model:gpt-4o-mini","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":21,"location":"main.py","offset":18},{"line":22,"location":"main.py","offset":19}]},"externalReferences":[{"type":"website","url":"https://platform.openai.com/docs/models/gpt-4o-mini"}],"manufacturer":{"name":"OpenAI, Inc.","url":["https://openai.com"]},"name":"gpt-4o-mini","type":"machine-learning-model"},{"bom-ref":"model:sanchit-gandhi/whisper-medium-fleurs-lang-id","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":8,"location":"whisper.py","offset":13},{"line":8,"location":"whisper.py","offset":46},{"line":9,"location":"whisper.py","offset":9},{"line":10,"location":"whisper.py","offset":5}]},"name":"sanchit-gandhi/whisper-medium-fleurs-lang-id","type":"machine-learning-model"},{"bom-ref":"pkg:openai","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":1,"location":"main.py","offset":20},{"line":6,"location":"main.py","offset":14}]},"name":"openai","type":"library"},{"bom-ref":"pkg:transformers","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":6,"location":"blip.py","offset":26},{"line":6,"location":"blip.py","offset":52},{"line":8,"location":"blip.py","offset":13},{"line":9,"location":"blip.py","offset":9},{"line":5,"location":"whisper.py","offset":26},{"line":5,"location":"whisper.py","offset":59},{"line":8,"location":"whisper.py","offset":13},{"line":9,"location":"whisper.py","offset":9}]},"name":"transformers","type":"library"},{"bom-ref":"tool:add","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":5,"location":"mcp/mcp-server.py","offset":2}]},"name":"add","type":"application"}],"dependencies":[{"dependsOn":["agent:agents.Agent","agent:create","mcp-client:agents.mcp.MCPServerSse-http://localhost:8000/sse","mcp-server:DemoServer","model:Salesforce/blip-vqa-base","model:deepseek-reasoner","model:gpt-3.5-turbo","model:gpt-4o-mini","model:sanchit-gandhi/whisper-medium-fleurs-lang-id","pkg:openai","pkg:transformers","service:deepseek"],"ref":"application:Root"},{"dependsOn":["mcp-server:http://localhost:8000/sse"],"ref":"mcp-client:agents.mcp.MCPServerSse-http://localhost:8000/sse"},{"dependsOn":["mcp-resource:get_greeting","tool:add"],"ref":"mcp-server:DemoServer"}],"metadata":{"manufacturer":{"name":"Snyk","url":["https://snyk.io"]}},"services":[{"bom-ref":"service:deepseek","endpoints":["https://api.deepseek.com/chat/completions"],"name":"deepseek","properties":[{"name":"location","value":"chat.py:6"}],"provider":{"name":"Hangzhou DeepSeek AI Co., Ltd.","url":["https://deepseek.ai"]}}],"specVersion":"1.6","version":1};
 
-// Severity colors matching Snyk Evo
-export const severityColors = {
-  critical: '#ef4444',
-  high: '#f97316', 
-  medium: '#eab308',
-  low: '#6b7280',
-};
+// Export the converted graph data
+export const graphData: GraphData = bomToGraphData(bomData);

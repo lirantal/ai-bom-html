@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evo by Snyk | AI-BOM Discovery</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #09090b;
+            --bg-panel: rgba(18, 18, 23, 0.8);
+            --border-glow: rgba(255, 255, 255, 0.1);
+            --accent-gradient: linear-gradient(135deg, #c026d3 0%, #7c3aed 50%, #f97316 100%);
+            --text-main: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --cyber-purple: #c026d3;
+            --cyber-orange: #f97316;
+            --card-radius: 12px;
+            
+            /* Component Colors */
+            --color-model: #22c55e;
+            --color-agent: #3b82f6;
+            --color-mcp: #a855f7;
+            --color-tool: #f59e0b;
+            --color-library: #ec4899;
+            --color-dataset: #06b6d4;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* --- Sidebar & Navigation --- */
+        #sidebar {
+            width: 260px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border-glow);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            z-index: 10;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-container img { height: 28px; }
+        .logo-container span { font-weight: 700; letter-spacing: -0.5px; font-size: 1.2rem; }
+
+        .nav-section h4 {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* --- Main Content Area --- */
+        #main-view {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #header-bar {
+            height: 64px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-glow);
+            background: rgba(9, 9, 11, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-pill {
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+        /* --- Canvas Container --- */
+        #cy-wrapper {
+            flex: 1;
+            position: relative;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+
+        #cy { width: 100%; height: 100%; position: absolute; }
+
+        /* --- Evo Assistant / Details Panel --- */
+        #evo-panel {
+            width: 380px;
+            background: rgba(12, 12, 16, 0.95);
+            border-left: 1px solid var(--border-glow);
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 20;
+        }
+
+        #evo-panel.active { transform: translateX(0); }
+
+        .evo-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .evo-avatar {
+            width: 32px; height: 32px;
+            background: var(--accent-gradient);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .detail-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--card-radius);
+            padding: 16px;
+        }
+
+        .detail-row { margin-bottom: 12px; }
+        .detail-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .detail-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #fff; word-break: break-all;}
+
+        /* --- Controls & Filter --- */
+        .cyber-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-glow);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .cyber-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--cyber-purple); }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .filter-item input { accent-color: var(--cyber-purple); }
+        .type-indicator { width: 10px; height: 10px; border-radius: 2px; }
+
+        /* JSON Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--accent-gradient); }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        #json-overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-deep);
+            z-index: 100;
+            display: none;
+            padding: 40px;
+        }
+        pre { font-family: 'JetBrains Mono', monospace; color: #10b981; font-size: 12px; overflow: auto; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="logo-container">
+            <img src="https://res.cloudinary.com/snyk/image/upload/v1769185661/illustration-spot-evo-inventory_ukp0sf.png" alt="Evo">
+            <span>EVO <small style="font-weight:300; font-size: 0.6em; color: var(--text-muted)">BY SNYK</small></span>
+        </div>
+
+        <div class="nav-section">
+            <h4>Global Actions</h4>
+            <div style="display:flex; flex-direction:column; gap:10px">
+                <button class="cyber-btn" onclick="zoomToFit()">
+                    <i class="fa-solid fa-expand"></i> Zoom to Fit
+                </button>
+                <div class="cyber-btn" style="justify-content: space-between">
+                    <span><i class="fa-solid fa-code"></i> Raw JSON</span>
+                    <label class="switch">
+                        <input type="checkbox" onchange="toggleJSON(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <h4>Component Filters</h4>
+            <div id="filter-list" class="filter-group">
+                </div>
+        </div>
+        
+        <div style="margin-top: auto; font-size: 11px; color: var(--text-muted)">
+            Snyk AI-BOM CLI v1.6.0
+        </div>
+    </aside>
+
+    <main id="main-view">
+        <div id="header-bar">
+            <div style="display:flex; align-items:center; gap:16px">
+                <h3 style="font-weight: 600">AI Inventory Graph</h3>
+                <div class="status-pill">
+                    <div class="status-dot"></div>
+                    Scan Complete
+                </div>
+            </div>
+            <div class="detail-value" style="opacity: 0.5">Application: Root Repository</div>
+        </div>
+
+        <div id="cy-wrapper">
+            <div id="cy"></div>
+        </div>
+
+        <div id="evo-panel">
+            <div style="display:flex; justify-content: flex-end">
+                <button onclick="closePanel()" style="background:none; border:none; color:white; cursor:pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="evo-header">
+                <div class="evo-avatar">
+                    <i class="fa-solid fa-robot" style="font-size: 14px"></i>
+                </div>
+                <div>
+                    <h3 id="panel-title">Asset Details</h3>
+                    <p style="font-size: 12px; color: var(--text-muted)">AI component intelligence</p>
+                </div>
+            </div>
+
+            <div id="panel-content">
+                </div>
+        </div>
+
+        <div id="json-overlay">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 20px">
+                <h2>Raw CycloneDX AI-BOM</h2>
+                <button class="cyber-btn" onclick="document.querySelector('.switch input').click()">Close</button>
+            </div>
+            <pre id="json-pre"></pre>
+        </div>
+    </main>
+
+    <script id="bom-data" type="application/json">
+    {"$schema":"https://cyclonedx.org/schema/bom-1.6.schema.json","bomFormat":"CycloneDX","components":[{"bom-ref":"agent:agents.Agent","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":9,"location":"mcp/mcp-client.py","offset":13}]},"name":"agents.Agent","type":"application"},{"bom-ref":"agent:create","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":21,"location":"main.py","offset":18}]},"name":"create","type":"application"},{"bom-ref":"application:Root","name":"Root","type":"application"},{"bom-ref":"mcp-client:agents.mcp.MCPServerSse-http://localhost:8000/sse","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":28,"location":"mcp/mcp-client.py","offset":16}]},"name":"agents.mcp.MCPServerSse http://localhost:8000/sse","type":"application"},{"bom-ref":"mcp-resource:get_greeting","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":11,"location":"mcp/mcp-server.py","offset":2}]},"name":"get_greeting","type":"data"},{"bom-ref":"mcp-server:DemoServer","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":3,"location":"mcp/mcp-server.py","offset":7},{"line":5,"location":"mcp/mcp-server.py","offset":2},{"line":11,"location":"mcp/mcp-server.py","offset":2}]},"name":"DemoServer","type":"application"},{"bom-ref":"mcp-server:http://localhost:8000/sse","evidence":{"identity":[{"field":"name","methods":[{"confidence":1,"technique":"source-code-analysis"}]}],"occurrences":[{"line":28,"location":"mcp/mcp-client.py","offset":16}]},"name":"http://localhost:8000/sse","type":"application"},{"authors":[{"name":"Junnan Li"},{"name":"Dongxu Li"},{"name":"Caiming Xiong"},{"name":"Steven Hoi"}],"bom-ref":"model:Salesforce/blip-vqa-base","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":8,"location":"blip.py","offset":13},{"line":8,"location":"blip.py","offset":43},{"line":9,"location":"blip.py","offset":9},{"line":9,"location":"blip.py","offset":50}]},"externalReferences":[{"type":"model-card","url":"https://huggingface.co/Salesforce/blip-vqa-base"}],"licenses":[{"license":{"id":"BSD-3-Clause","url":"https://spdx.org/licenses/BSD-3-Clause.html"}}],"modelCard":{"modelParameters":{"approach":{"type":"self-supervised"},"architectureFamily":"transformer","inputs":[{"format":"image"},{"format":"text"}],"modelArchitecture":"BLIP","outputs":[{"format":"text"}],"task":"visual-question-answering"}},"name":"Salesforce/blip-vqa-base","publisher":"Hugging Face Inc","type":"machine-learning-model"},{"bom-ref":"model:deepseek-reasoner","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.3,"technique":"source-code-analysis"}]}],"occurrences":[{"line":13,"location":"chat.py","offset":14}]},"externalReferences":[{"type":"website","url":"https://api-docs.deepseek.com/api/list-models"}],"manufacturer":{"name":"Hangzhou DeepSeek AI Co., Ltd.","url":["https://deepseek.ai"]},"name":"deepseek-reasoner","type":"machine-learning-model"},{"bom-ref":"model:gpt-3.5-turbo","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":13,"location":"mcp/mcp-client.py","offset":24},{"line":13,"location":"mcp/mcp-client.py","offset":44}]},"externalReferences":[{"type":"website","url":"https://platform.openai.com/docs/models/gpt-3.5-turbo"}],"manufacturer":{"name":"OpenAI, Inc.","url":["https://openai.com"]},"name":"gpt-3.5-turbo","type":"machine-learning-model"},{"bom-ref":"model:gpt-4o-mini","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":21,"location":"main.py","offset":18},{"line":22,"location":"main.py","offset":19}]},"externalReferences":[{"type":"website","url":"https://platform.openai.com/docs/models/gpt-4o-mini"}],"manufacturer":{"name":"OpenAI, Inc.","url":["https://openai.com"]},"name":"gpt-4o-mini","type":"machine-learning-model"},{"bom-ref":"model:sanchit-gandhi/whisper-medium-fleurs-lang-id","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":8,"location":"whisper.py","offset":13},{"line":8,"location":"whisper.py","offset":46},{"line":9,"location":"whisper.py","offset":9},{"line":10,"location":"whisper.py","offset":5}]},"name":"sanchit-gandhi/whisper-medium-fleurs-lang-id","type":"machine-learning-model"},{"bom-ref":"pkg:openai","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":1,"location":"main.py","offset":20},{"line":6,"location":"main.py","offset":14}]},"name":"openai","type":"library"},{"bom-ref":"pkg:transformers","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":6,"location":"blip.py","offset":26},{"line":6,"location":"blip.py","offset":52},{"line":8,"location":"blip.py","offset":13},{"line":9,"location":"blip.py","offset":9},{"line":5,"location":"whisper.py","offset":26},{"line":5,"location":"whisper.py","offset":59},{"line":8,"location":"whisper.py","offset":13},{"line":9,"location":"whisper.py","offset":9}]},"name":"transformers","type":"library"},{"bom-ref":"tool:add","evidence":{"identity":[{"field":"name","methods":[{"confidence":0.9,"technique":"source-code-analysis"}]}],"occurrences":[{"line":5,"location":"mcp/mcp-server.py","offset":2}]},"name":"add","type":"application"}],"dependencies":[{"dependsOn":["agent:agents.Agent","agent:create","mcp-client:agents.mcp.MCPServerSse-http://localhost:8000/sse","mcp-server:DemoServer","model:Salesforce/blip-vqa-base","model:deepseek-reasoner","model:gpt-3.5-turbo","model:gpt-4o-mini","model:sanchit-gandhi/whisper-medium-fleurs-lang-id","pkg:openai","pkg:transformers","service:deepseek"],"ref":"application:Root"},{"dependsOn":["mcp-server:http://localhost:8000/sse"],"ref":"mcp-client:agents.mcp.MCPServerSse-http://localhost:8000/sse"},{"dependsOn":["mcp-resource:get_greeting","tool:add"],"ref":"mcp-server:DemoServer"}],"metadata":{"manufacturer":{"name":"Snyk","url":["https://snyk.io"]}},"services":[{"bom-ref":"service:deepseek","endpoints":["https://api.deepseek.com/chat/completions"],"name":"deepseek","properties":[{"name":"location","value":"chat.py:6"}],"provider":{"name":"Hangzhou DeepSeek AI Co., Ltd.","url":["https://deepseek.ai"]}}],"specVersion":"1.6","version":1}
+    </script>
+
+    <script>
+        const bom = JSON.parse(document.getElementById('bom-data').textContent);
+        let cy;
+
+        const colorMap = {
+            'machine-learning-model': '#22c55e',
+            'application': '#3b82f6',
+            'library': '#ec4899',
+            'data': '#06b6d4',
+            'tool': '#f59e0b',
+            'service': '#ef4444',
+            'mcp_server': '#a855f7'
+        };
+
+        function getCompType(ref) {
+            if (ref.startsWith('model:')) return 'machine-learning-model';
+            if (ref.startsWith('agent:')) return 'agent';
+            if (ref.startsWith('pkg:')) return 'library';
+            if (ref.startsWith('mcp-server:')) return 'mcp_server';
+            if (ref.startsWith('tool:')) return 'tool';
+            return 'component';
+        }
+
+        function initGraph() {
+            const nodes = [...(bom.components || []), ...(bom.services || [])].map(c => {
+                const type = c.type || getCompType(c['bom-ref']);
+                return {
+                    data: { 
+                        id: c['bom-ref'], 
+                        label: c.name.split('/').pop(),
+                        fullName: c.name,
+                        type: type,
+                        raw: c,
+                        color: colorMap[type] || '#71717a'
+                    }
+                };
+            });
+
+            const edges = [];
+            bom.dependencies.forEach(d => {
+                if (d.dependsOn) {
+                    d.dependsOn.forEach(target => {
+                        edges.push({ data: { source: d.ref, target: target } });
+                    });
+                }
+            });
+
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: { nodes, edges },
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': 'data(color)',
+                            'label': 'data(label)',
+                            'color': '#fff',
+                            'font-family': 'Inter',
+                            'font-size': '10px',
+                            'text-valign': 'bottom',
+                            'text-margin-y': '6px',
+                            'width': '32px',
+                            'height': '32px',
+                            'border-width': '2px',
+                            'border-color': 'rgba(255,255,255,0.2)',
+                            'transition-property': 'background-color, border-color, width, height',
+                            'transition-duration': '0.2s'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 1,
+                            'line-color': 'rgba(255,255,255,0.1)',
+                            'target-arrow-color': 'rgba(255,255,255,0.1)',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier',
+                            'arrow-scale': 0.8
+                        }
+                    },
+                    {
+                        selector: 'node:selected',
+                        style: {
+                            'border-color': '#fff',
+                            'border-width': '4px',
+                            'width': '40px',
+                            'height': '40px'
+                        }
+                    }
+                ],
+                layout: { name: 'dagre', rankDir: 'LR', padding: 50 }
+            });
+
+            cy.on('tap', 'node', e => showDetails(e.target.data()));
+            cy.on('tap', e => { if(e.target === cy) closePanel(); });
+            
+            updateFilters(nodes);
+        }
+
+        function showDetails(data) {
+            const panel = document.getElementById('evo-panel');
+            const content = document.getElementById('panel-content');
+            panel.classList.add('active');
+            
+            const c = data.raw;
+            let html = `
+                <div class="detail-card">
+                    <div class="detail-row">
+                        <div class="detail-label">Asset Name</div>
+                        <div class="detail-value" style="font-weight:600">${c.name}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Type</div>
+                        <div class="detail-value">${data.type}</div>
+                    </div>
+                    ${c.publisher ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Publisher</div>
+                        <div class="detail-value">${c.publisher}</div>
+                    </div>` : ''}
+                </div>
+            `;
+
+            if (c.evidence && c.evidence.occurrences) {
+                html += `
+                    <div class="nav-section"><h4>Code Evidence</h4></div>
+                    <div class="detail-card">
+                        ${c.evidence.occurrences.map(occ => `
+                            <div class="detail-row">
+                                <div class="detail-value"><i class="fa-solid fa-file-code"></i> ${occ.location}</div>
+                                <div class="detail-label">Line ${occ.line}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+        }
+
+        function updateFilters(nodes) {
+            const types = [...new Set(nodes.map(n => n.data.type))];
+            const list = document.getElementById('filter-list');
+            
+            types.forEach(t => {
+                const item = document.createElement('div');
+                item.className = 'filter-item';
+                item.innerHTML = `
+                    <input type="checkbox" checked onchange="toggleType('${t}', this.checked)">
+                    <div class="type-indicator" style="background:${colorMap[t] || '#71717a'}"></div>
+                    <span>${t.replace(/-/g, ' ')}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function toggleType(type, show) {
+            const elements = cy.elements(`node[type="${type}"]`);
+            show ? elements.style('display', 'element') : elements.style('display', 'none');
+        }
+
+        function zoomToFit() { cy.fit(50); }
+        function closePanel() { document.getElementById('evo-panel').classList.remove('active'); }
+        
+        function toggleJSON(cb) {
+            const overlay = document.getElementById('json-overlay');
+            const pre = document.getElementById('json-pre');
+            if (cb.checked) {
+                pre.textContent = JSON.stringify(bom, null, 2);
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        window.onload = initGraph;
+    </script>
+</body>
+</html>
