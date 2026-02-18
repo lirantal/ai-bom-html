@@ -5,6 +5,7 @@ The header search box filters the constellation graph by component **type** and 
 ## Behavior
 
 - **Search input** — Type in the "Search components..." field to narrow the visible nodes.
+- **Keyboard shortcut** — Press **⌘K** (Mac) or **Ctrl+K** (Windows/Linux) from anywhere in the app to focus the search input. A **⌘K** hint is shown on the right side of the search box.
 - **Fuzzy match** — A query matches if every character of the query appears in order in the target text (case-insensitive). For example:
   - `gpt` matches "gpt-3.5-turbo", "gpt-4o-mini"
   - `blip` matches "Salesforce/blip-vqa-base"
