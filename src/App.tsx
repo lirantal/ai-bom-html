@@ -144,6 +144,7 @@ export default function App() {
             onNodeSelect={setSelectedNode}
             selectedNodeId={selectedNode?.id || null}
             filter={filter}
+            searchQuery={searchQuery}
           />
 
           {/* Stats overlay */}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { graphData, nodeTypeConfig, type GraphNode, type NodeType } from '../lib/graph-data';
+import { fuzzyMatchAny } from '../lib/fuzzy-match';
 
 interface NodePosition {
   x: number;
@@ -13,11 +14,13 @@ interface NodePosition {
 export function ConstellationGraph({ 
   onNodeSelect,
   selectedNodeId,
-  filter
+  filter,
+  searchQuery = ''
 }: { 
   onNodeSelect: (node: GraphNode | null) => void;
   selectedNodeId: string | null;
   filter: string;
+  searchQuery?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,19 +33,28 @@ export function ConstellationGraph({
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
 
-  // Filter nodes based on the filter string
+  // Filter nodes by type (filter dropdown) and by search (fuzzy match on type + name)
   const filteredNodes = useMemo(() => {
-    if (!filter || filter === 'all') return graphData.nodes;
-    return graphData.nodes.filter(node => {
-      if (filter === 'models') return node.type === 'model';
-      if (filter === 'agents') return node.type === 'agent';
-      if (filter === 'servers') return node.type === 'mcp-server' || node.type === 'mcp-client';
-      if (filter === 'tools') return node.type === 'tool' || node.type === 'mcp-resource';
-      if (filter === 'libraries') return node.type === 'library';
-      if (filter === 'services') return node.type === 'service';
-      return true;
-    });
-  }, [filter]);
+    let nodes = graphData.nodes;
+    if (filter && filter !== 'all') {
+      nodes = nodes.filter(node => {
+        if (filter === 'models') return node.type === 'model';
+        if (filter === 'agents') return node.type === 'agent';
+        if (filter === 'servers') return node.type === 'mcp-server' || node.type === 'mcp-client';
+        if (filter === 'tools') return node.type === 'tool' || node.type === 'mcp-resource';
+        if (filter === 'libraries') return node.type === 'library';
+        if (filter === 'services') return node.type === 'service';
+        return true;
+      });
+    }
+    if (searchQuery.trim()) {
+      nodes = nodes.filter(node => {
+        const typeLabel = nodeTypeConfig[node.type]?.label ?? node.type;
+        return fuzzyMatchAny(searchQuery, [node.label, node.fullName, node.type, typeLabel]);
+      });
+    }
+    return nodes;
+  }, [filter, searchQuery]);
 
   // Calculate node positions in a radial constellation layout
   const nodePositions = useMemo(() => {
