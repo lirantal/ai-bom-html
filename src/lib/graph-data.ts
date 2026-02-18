@@ -200,7 +200,7 @@ export const nodeTypeConfig: Record<NodeType, { color: string; bgColor: string; 
     bgColor: 'rgba(245,158,11,0.12)', 
     borderColor: 'rgba(245,158,11,0.35)', 
     icon: '⚙',
-    label: 'Tool'
+    label: 'MCP Tool'
   },
   'service': { 
     color: '#ef4444', 

@@ -20,7 +20,7 @@ The overlay in the **top-left** of the graph shows summary cards with live count
    - **Color:** The number uses the same color as that type in the graph and in the Components legend (from `nodeTypeConfig[type].color`).  
    - **Clickable (when the type has a header filter):** Clicking a type card filters the constellation to show only that component type (or the filter category that includes it). See [Interaction: filtering from cards](#interaction-filtering-from-cards) below.
 
-Only types that have at least one node in the current `graphData` get a card. So if the BOM has no tools or no data nodes, there will be no “Tool” or “Data” card.
+Only types that have at least one node in the current `graphData` get a card. So if the BOM has no tools or no data nodes, there will be no “MCP Tool” or “Data” card.
 
 ## Order of type cards
 
@@ -43,7 +43,7 @@ The set of type cards depends on what the BOM contains. The possible types (and 
 | `mcp-server`  | MCP Server     | `mcp-server:`                          |
 | `mcp-client`  | MCP Client     | `mcp-client:`                          |
 | `mcp-resource`| MCP Resource   | `mcp-resource:`                        |
-| `tool`        | Tool           | `tool:`                                |
+| `tool`        | MCP Tool       | `tool:`                                |
 | `service`     | Service        | `service:` or BOM services             |
 | `application`| Application    | `application:`                         |
 | `data`        | Data           | (fallback)                             |
@@ -69,7 +69,7 @@ The dashboard type cards are **connected to the header components filter**: clic
   - **MCP Server** / **MCP Client** → filter "MCP Servers" (both types).
   - **Library** → filter "Libraries".
   - **Service** → filter "Services".
-  - **Tool** / **MCP Resource** → filter "Tools & Resources" (both types).
+  - **MCP Tool** / **MCP Resource** → filter "Tools & Resources" (both types).
 - **Type cards with no filter (e.g. Application, Data):** Not clickable; they only show the count.
 
 Clickable cards use hover styles (e.g. slightly stronger background and border), a tooltip ("Show only X" or "Clear filter (show all)" when that card is the active filter), and keyboard support (Enter/Space) for accessibility. The header filter dropdown and the dashboard cards stay in sync: after clicking a card, the dropdown shows that single filter as selected; clearing in the dropdown or by clicking the same card again both reset to all components.

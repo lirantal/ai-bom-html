@@ -48,7 +48,7 @@ Position on a circle is **entirely determined by component type**, in a fixed or
 5. **Ring 5** – Library  
 6. **Ring 6** – Service  
 7. **Ring 7** – MCP Resource  
-8. **Ring 8** – Tool  
+8. **Ring 8** – MCP Tool  
 9. **Ring 9** – Data  
 
 (Plus the center for the root application, and an extra ring for other application nodes if present.)
@@ -57,7 +57,7 @@ So:
 - **MCP Client** on the first circle and **MCP Server** on the second is by design: the order is `['mcp-client', 'mcp-server', 'agent', 'model', ...]`.
 - **Model** on the 4th circle is because in that list, “model” is the 4th type, so it gets the 4th ring.
 
-So the significance is **semantic**: ring index = fixed order of component types (clients → servers → agents → models → libraries → services → resources → tools → data). It’s not random and not based on the number of nodes.
+So the significance is **semantic**: ring index = fixed order of component types (clients → servers → agents → models → libraries → services → resources → MCP tools → data). It’s not random and not based on the number of nodes.
 
 ---
 
