@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Filter, Code2, Maximize2, Search, ChevronDown } from 'lucide-react';
+import { Filter, Code2, Maximize2, Search, ChevronDown, Copy, Check } from 'lucide-react';
 import { ConstellationGraph, type ConstellationGraphHandle } from './components/constellation-graph';
 import { NodeDetailPanel } from './components/node-detail-panel';
 import { type GraphNode, bomData, graphData } from './lib/graph-data';
@@ -43,7 +43,18 @@ export default function App() {
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [jsonCopied, setJsonCopied] = useState(false);
   const graphRef = useRef<ConstellationGraphHandle>(null);
+
+  const copyJsonToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(bomData, null, 2));
+      setJsonCopied(true);
+      setTimeout(() => setJsonCopied(false), 2000);
+    } catch {
+      setJsonCopied(false);
+    }
+  };
 
   const filters = [
     { id: 'all', label: 'All Components' },
@@ -181,12 +192,22 @@ export default function App() {
             <div className="absolute bottom-4 left-4 right-4 max-h-80 bg-card/90 backdrop-blur-md border border-border/50 rounded-md overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-secondary/20">
                 <span className="text-xs font-medium text-foreground">Raw CycloneDX AI-BOM</span>
-                <button 
-                  onClick={() => setShowJSON(false)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Code2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={copyJsonToClipboard}
+                    className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                    title="Copy JSON"
+                  >
+                    {jsonCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <button 
+                    onClick={() => setShowJSON(false)}
+                    className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                    title="Close"
+                  >
+                    <Code2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               <pre className="p-3 text-xs font-mono text-green-400 overflow-auto max-h-64">
                 {JSON.stringify(bomData, null, 2)}
