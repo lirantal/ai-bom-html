@@ -1,5 +1,22 @@
 # Constellation layout
 
+## Page layout (where things are)
+
+The app screen is organized as follows:
+
+- **Header (top, full width):** Evo by Snyk logo, “AI-BOM” label, search (⌘K), then on the right: filter dropdown (“All Components” / Models / Agents / etc.), “Zoom to Fit”, and “Show JSON”. The header is fixed; the main content scrolls underneath if needed.
+- **Main area:** The constellation graph (radial/orbital node layout) fills the space below the header.
+- **Top-left overlay:** Dashboard stat cards — total **Components** plus one card per component type that appears in the current BOM (e.g. MCP Client, MCP Server, Agent, Model, Library, …). Cards wrap when there are many types. See [Dashboard cards stats](./dashboard-cards-stats.md).
+- **Bottom-left:** Two elements side by side:
+  1. **Components legend** — collapsible (default: collapsed). When expanded, shows the list of component types with icon and label in the same order as the constellation rings. See [Components legend](./components-legend.md).
+  2. **CycloneDX** — small pill showing the spec version (e.g. “CycloneDX v1.6”). Same vertical height as the collapsed legend bar.
+- **Bottom-right:** Zoom controls (+, −, Reset) over the graph.
+- **Overlays (when used):** “Show JSON” opens a panel at the bottom with the raw CycloneDX AI-BOM; clicking a node opens the node detail panel on the right.
+
+So: stats live top-left; the legend and CycloneDX live bottom-left together; zoom controls stay bottom-right.
+
+---
+
 ## What we call it
 
 The layout is a **radial / orbital** layout: nodes sit on concentric circles (rings) around a center. The code and UI already call it **constellation**, which fits well: nodes are like stars on fixed orbits, with edges connecting them. So **“constellation”** is an appropriate and consistent name.

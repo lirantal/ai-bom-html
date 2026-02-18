@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { constellationRingOrder, graphData, nodeTypeConfig, type GraphNode, type NodeType } from '../lib/graph-data';
+import { constellationRingOrder, graphData, nodeTypeConfig, type GraphNode } from '../lib/graph-data';
 import { fuzzyMatchAny } from '../lib/fuzzy-match';
 
 interface NodePosition {
@@ -521,23 +521,6 @@ export const ConstellationGraph = forwardRef<ConstellationGraphHandle, {
         >
           Reset
         </button>
-      </div>
-
-      {/* Legend: ordered by constellation ring (inner to outer), then application */}
-      <div className="absolute top-4 right-4 bg-card/80 backdrop-blur-sm rounded-lg p-3 border border-border/50">
-        <div className="text-xs text-muted-foreground mb-2">Components</div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-          {([...constellationRingOrder, 'application'] as NodeType[]).map(type => {
-            const config = nodeTypeConfig[type];
-            if (!config) return null;
-            return (
-              <div key={type} className="flex items-center gap-2 text-xs">
-                <span style={{ color: config.color }}>{config.icon}</span>
-                <span className="text-foreground/70">{config.label}</span>
-              </div>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

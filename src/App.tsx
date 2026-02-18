@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Filter, Code2, Maximize2, Search, ChevronDown, Copy, Check } from 'lucide-react';
+import { Filter, Code2, Maximize2, Search, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { ConstellationGraph, type ConstellationGraphHandle } from './components/constellation-graph';
 import { NodeDetailPanel } from './components/node-detail-panel';
-import { type GraphNode, bomData, graphData } from './lib/graph-data';
+import { type GraphNode, type NodeType, bomData, graphData, nodeTypeConfig, constellationRingOrder } from './lib/graph-data';
 
 const EVO_LOGO_DARK_URL =
   'https://res.cloudinary.com/snyk/image/upload/snyk-mktg-brandui/brand-logos/evo-logo-dark-mode.svg';
@@ -14,6 +14,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [jsonCopied, setJsonCopied] = useState(false);
+  const [legendExpanded, setLegendExpanded] = useState(false);
   const graphRef = useRef<ConstellationGraphHandle>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +48,20 @@ export default function App() {
     { id: 'services', label: 'Services' },
     { id: 'tools', label: 'Tools & Resources' },
   ];
+
+  // Dynamic stats: total + one card per component type present in the data (ordered by constellation ring order)
+  const typeCounts = graphData.nodes.reduce<Record<NodeType, number>>(
+    (acc, node) => {
+      acc[node.type] = (acc[node.type] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<NodeType, number>
+  );
+  const typesWithCount = constellationRingOrder.filter((t) => (typeCounts[t] ?? 0) > 0);
+  const otherTypes = (Object.keys(typeCounts) as NodeType[]).filter(
+    (t) => !constellationRingOrder.includes(t) && (typeCounts[t] ?? 0) > 0
+  );
+  const statsTypeOrder = [...typesWithCount, ...otherTypes];
 
   return (
     <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
@@ -147,28 +162,69 @@ export default function App() {
             searchQuery={searchQuery}
           />
 
-          {/* Stats overlay */}
-          <div className="absolute top-4 left-4 flex gap-2">
-            <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
+          {/* Top-left: stats cards only */}
+          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+            <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30 shrink-0">
               <div className="text-lg font-semibold text-foreground">{graphData.nodes.length}</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Components</div>
             </div>
-            <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-              <div className="text-lg font-semibold text-green-400">{graphData.nodes.filter(n => n.type === 'model').length}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Models</div>
-            </div>
-            <div className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-              <div className="text-lg font-semibold text-purple-400">{graphData.nodes.filter(n => n.type === 'mcp-server' || n.type === 'mcp-client').length}</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">MCP</div>
-            </div>
+            {statsTypeOrder.map((type) => {
+              const config = nodeTypeConfig[type];
+              const count = typeCounts[type] ?? 0;
+              return (
+                <div
+                  key={type}
+                  className="bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30 shrink-0"
+                >
+                  <div className="text-lg font-semibold" style={{ color: config.color }}>
+                    {count}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {config.label}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Spec version pill */}
-          <div className="absolute top-4 right-80 flex items-center gap-1.5 bg-card/60 backdrop-blur-md rounded-md px-3 py-2 border border-border/30">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">CycloneDX</span>
-            <span className="inline-flex items-center justify-center px-2 h-5 rounded text-xs font-medium bg-accent/20 text-accent border border-accent/30">
-              v{bomData.specVersion}
-            </span>
+          {/* Bottom-left: Components legend (collapsible) + CycloneDX side by side */}
+          <div className="absolute bottom-4 left-4 flex items-end gap-2">
+            <div
+              className={`bg-card/80 backdrop-blur-sm rounded-md border border-border/50 w-fit overflow-hidden flex flex-col ${!legendExpanded ? 'h-9' : ''}`}
+            >
+              <button
+                type="button"
+                onClick={() => setLegendExpanded((e) => !e)}
+                className={`flex items-center gap-2 px-3 text-left text-xs text-muted-foreground hover:bg-secondary/30 transition-colors ${!legendExpanded ? 'h-full min-h-0 shrink-0' : 'w-full py-2'}`}
+              >
+                <span className="text-muted-foreground">Components</span>
+                {legendExpanded ? (
+                  <ChevronDown className="w-3.5 h-3.5 shrink-0" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                )}
+              </button>
+              {legendExpanded && (
+                <div className="px-3 pb-3 pt-0 grid grid-cols-2 gap-x-4 gap-y-1">
+                  {([...constellationRingOrder, 'application'] as NodeType[]).map((type) => {
+                    const config = nodeTypeConfig[type];
+                    if (!config) return null;
+                    return (
+                      <div key={type} className="flex items-center gap-2 text-xs">
+                        <span style={{ color: config.color }}>{config.icon}</span>
+                        <span className="text-foreground/70">{config.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <div className="h-9 flex items-center gap-1.5 bg-card/60 backdrop-blur-md rounded-md px-3 border border-border/30 shrink-0">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">CycloneDX</span>
+              <span className="inline-flex items-center justify-center px-2 h-5 rounded text-xs font-medium bg-accent/20 text-accent border border-accent/30">
+                v{bomData.specVersion}
+              </span>
+            </div>
           </div>
 
           {/* JSON panel */}
