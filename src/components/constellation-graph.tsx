@@ -15,15 +15,27 @@ export interface ConstellationGraphHandle {
   zoomToFit: () => void;
 }
 
+function nodeMatchesFilterIds(node: GraphNode, selectedFilterIds: string[]): boolean {
+  for (const id of selectedFilterIds) {
+    if (id === 'models' && node.type === 'model') return true;
+    if (id === 'agents' && node.type === 'agent') return true;
+    if (id === 'servers' && (node.type === 'mcp-server' || node.type === 'mcp-client')) return true;
+    if (id === 'tools' && (node.type === 'tool' || node.type === 'mcp-resource')) return true;
+    if (id === 'libraries' && node.type === 'library') return true;
+    if (id === 'services' && node.type === 'service') return true;
+  }
+  return false;
+}
+
 export const ConstellationGraph = forwardRef<ConstellationGraphHandle, {
   onNodeSelect: (node: GraphNode | null) => void;
   selectedNodeId: string | null;
-  filter: string;
+  selectedFilterIds: string[];
   searchQuery?: string;
 }>(function ConstellationGraph({
   onNodeSelect,
   selectedNodeId,
-  filter,
+  selectedFilterIds,
   searchQuery = ''
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -37,19 +49,11 @@ export const ConstellationGraph = forwardRef<ConstellationGraphHandle, {
   const isDragging = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
 
-  // Filter nodes by type (filter dropdown) and by search (fuzzy match on type + name)
+  // Filter nodes by type (multi-select filter) and by search (fuzzy match on type + name)
   const filteredNodes = useMemo(() => {
     let nodes = graphData.nodes;
-    if (filter && filter !== 'all') {
-      nodes = nodes.filter(node => {
-        if (filter === 'models') return node.type === 'model';
-        if (filter === 'agents') return node.type === 'agent';
-        if (filter === 'servers') return node.type === 'mcp-server' || node.type === 'mcp-client';
-        if (filter === 'tools') return node.type === 'tool' || node.type === 'mcp-resource';
-        if (filter === 'libraries') return node.type === 'library';
-        if (filter === 'services') return node.type === 'service';
-        return true;
-      });
+    if (selectedFilterIds.length > 0) {
+      nodes = nodes.filter(node => nodeMatchesFilterIds(node, selectedFilterIds));
     }
     if (searchQuery.trim()) {
       nodes = nodes.filter(node => {
@@ -58,7 +62,7 @@ export const ConstellationGraph = forwardRef<ConstellationGraphHandle, {
       });
     }
     return nodes;
-  }, [filter, searchQuery]);
+  }, [selectedFilterIds, searchQuery]);
 
   // Calculate node positions in a radial constellation layout
   const nodePositions = useMemo(() => {

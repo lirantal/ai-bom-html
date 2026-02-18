@@ -4,7 +4,7 @@
 
 The app screen is organized as follows:
 
-- **Header (top, full width):** Evo by Snyk logo, “AI-BOM” label, search (⌘K), then on the right: filter dropdown (“All Components” / Models / Agents / etc.), “Zoom to Fit”, and “Show JSON”. The header is fixed; the main content scrolls underneath if needed.
+- **Header (top, full width):** Evo by Snyk logo, “AI-BOM” label, search (⌘K), then on the right: components filter dropdown (multi-select with checkboxes; see [Components filter (multi-select)](#components-filter-multi-select)), “Zoom to Fit”, and “Show JSON”. The header is fixed; the main content scrolls underneath if needed.
 - **Main area:** The constellation graph (radial/orbital node layout) fills the space below the header.
 - **Top-left overlay:** Dashboard stat cards — total **Components** plus one card per component type that appears in the current BOM (e.g. MCP Client, MCP Server, Agent, Model, Library, …). Cards wrap when there are many types. See [Dashboard cards stats](./dashboard-cards-stats.md).
 - **Bottom-left:** Two elements side by side:
@@ -77,3 +77,22 @@ Filtering should only hide/show types; it should not change **which ring** a typ
 
 **Fix:**  
 Use a **canonical ring index per type** derived from `constellationRingOrder` in `src/lib/graph-data.ts` (e.g. model = index 3 → ring 4), and use that when placing nodes, instead of a running `ringIndex` that only increments for types that have nodes in the current view. That way, when you filter to one component type, it stays on the same circle as in the full constellation view. The Components legend uses the same order (`constellationRingOrder` + application) so it matches the rings.
+
+---
+
+## Components filter (multi-select)
+
+The header filter dropdown lets users show **one or more** component types at once instead of a single choice.
+
+- **Behavior:**  
+  - **No selection** = “All Components” (all types visible).  
+  - **One or more types selected** = only those types are shown. A node is included if its type matches any selected filter (e.g. “MCP Servers” includes both `mcp-server` and `mcp-client`).
+
+- **UI:**  
+  - Each option has a **checkbox** to the left of the label (Models, Agents, MCP Servers, Libraries, Services, Tools & Resources).  
+  - Checked = that type is included in the filter. Clicking a row toggles that type; the menu stays open so multiple options can be selected.  
+  - The button label shows: “All Components” when none selected; the single type name when one is selected; or “N types” when multiple are selected (e.g. “2 types”).  
+  - A **“Clear all filters”** action at the bottom of the dropdown clears the selection (back to “All Components”) and closes the menu.
+
+- **Implementation:**  
+  - App state is `selectedFilterIds: Set<string>` (empty = all). The graph receives `selectedFilterIds` as an array and filters nodes with `nodeMatchesFilterIds()` so a node is shown if it matches any selected filter id. Ring positions still use the canonical ring index per type, so filtered views keep the same ring per type as in the full view.

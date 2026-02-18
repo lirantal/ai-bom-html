@@ -7,10 +7,19 @@ import { type GraphNode, type NodeType, bomData, graphData, nodeTypeConfig, cons
 const EVO_LOGO_DARK_URL =
   'https://res.cloudinary.com/snyk/image/upload/snyk-mktg-brandui/brand-logos/evo-logo-dark-mode.svg';
 
+const COMPONENT_FILTERS = [
+  { id: 'models', label: 'Models' },
+  { id: 'agents', label: 'Agents' },
+  { id: 'servers', label: 'MCP Servers' },
+  { id: 'libraries', label: 'Libraries' },
+  { id: 'services', label: 'Services' },
+  { id: 'tools', label: 'Tools & Resources' },
+] as const;
+
 export default function App() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [showJSON, setShowJSON] = useState(false);
-  const [filter, setFilter] = useState('all');
+  const [selectedFilterIds, setSelectedFilterIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [jsonCopied, setJsonCopied] = useState(false);
@@ -39,15 +48,25 @@ export default function App() {
     }
   };
 
-  const filters = [
-    { id: 'all', label: 'All Components' },
-    { id: 'models', label: 'Models' },
-    { id: 'agents', label: 'Agents' },
-    { id: 'servers', label: 'MCP Servers' },
-    { id: 'libraries', label: 'Libraries' },
-    { id: 'services', label: 'Services' },
-    { id: 'tools', label: 'Tools & Resources' },
-  ];
+  const filterButtonLabel =
+    selectedFilterIds.size === 0
+      ? 'All Components'
+      : selectedFilterIds.size === 1
+        ? COMPONENT_FILTERS.find((f) => selectedFilterIds.has(f.id))?.label ?? 'Components'
+        : `${selectedFilterIds.size} types`;
+
+  const toggleFilter = (id: string) => {
+    setSelectedFilterIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSelectedFilterIds(new Set());
+  };
 
   // Dynamic stats: total + one card per component type present in the data (ordered by constellation ring order)
   const typeCounts = graphData.nodes.reduce<Record<NodeType, number>>(
@@ -106,22 +125,41 @@ export default function App() {
               className="h-8 px-3 bg-secondary/40 hover:bg-secondary/60 border border-border/50 rounded-md text-sm text-foreground flex items-center gap-2 transition-colors"
             >
               <Filter className="w-3.5 h-3.5" />
-              <span className="text-foreground/80">{filters.find(f => f.id === filter)?.label}</span>
+              <span className="text-foreground/80">{filterButtonLabel}</span>
               <ChevronDown className="w-3 h-3 text-muted-foreground" />
             </button>
             {showFilterMenu && (
-              <div className="absolute top-full right-0 mt-1 w-48 bg-popover border border-border/50 rounded-md shadow-xl py-1 z-50">
-                {filters.map(f => (
+              <div className="absolute top-full right-0 mt-1 w-52 bg-popover border border-border/50 rounded-md shadow-xl py-1 z-50">
+                {COMPONENT_FILTERS.map((f) => (
                   <button
                     key={f.id}
-                    onClick={() => { setFilter(f.id); setShowFilterMenu(false); }}
-                    className={`w-full px-3 py-1.5 text-sm text-left hover:bg-secondary/50 transition-colors ${
-                      filter === f.id ? 'text-accent' : 'text-foreground/80'
-                    }`}
+                    type="button"
+                    onClick={() => toggleFilter(f.id)}
+                    className="w-full px-3 py-1.5 text-sm text-left hover:bg-secondary/50 transition-colors flex items-center gap-2"
                   >
-                    {f.label}
+                    <span
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                        selectedFilterIds.has(f.id)
+                          ? 'bg-accent border-accent'
+                          : 'border-border bg-background'
+                      }`}
+                      aria-hidden
+                    >
+                      {selectedFilterIds.has(f.id) && <Check className="w-2.5 h-2.5 text-white" />}
+                    </span>
+                    <span className={selectedFilterIds.has(f.id) ? 'text-accent' : 'text-foreground/80'}>
+                      {f.label}
+                    </span>
                   </button>
                 ))}
+                <div className="my-1 border-t border-border/50" />
+                <button
+                  type="button"
+                  onClick={() => { clearAllFilters(); setShowFilterMenu(false); }}
+                  className="w-full px-3 py-1.5 text-sm text-left text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-colors"
+                >
+                  Clear all filters
+                </button>
               </div>
             )}
           </div>
@@ -158,7 +196,7 @@ export default function App() {
             ref={graphRef}
             onNodeSelect={setSelectedNode}
             selectedNodeId={selectedNode?.id || null}
-            filter={filter}
+            selectedFilterIds={Array.from(selectedFilterIds)}
             searchQuery={searchQuery}
           />
 
