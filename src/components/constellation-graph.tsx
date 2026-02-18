@@ -359,10 +359,10 @@ export const ConstellationGraph = forwardRef<ConstellationGraphHandle, {
 
       // Label
       ctx.fillStyle = isHovered || isSelected ? '#ffffff' : 'rgba(255,255,255,0.7)';
-      ctx.font = `${isHovered || isSelected ? '12px' : '10px'} sans-serif`;
+      ctx.font = `19px sans-serif`;
       ctx.textAlign = 'center';
       const displayLabel = pos.node.label.length > 18 ? pos.node.label.slice(0, 16) + '...' : pos.node.label;
-      ctx.fillText(displayLabel, pos.x, pos.y + size + 12);
+      ctx.fillText(displayLabel, pos.x, pos.y + size + 16);
     });
 
     ctx.restore();
