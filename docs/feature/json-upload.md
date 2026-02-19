@@ -29,7 +29,7 @@ Parse errors (invalid JSON) also show in the error banner.
 
 ## Implementation
 
-- **App state:** `currentBom` holds the BOM in use (initialized from `defaultBomData` in `graph-data.ts`). `graphData` is derived with `getGraphData(currentBom)` and passed to `ConstellationGraph`.
+- **App state:** `currentBom` holds the BOM in use (initialized from the injected BOM (script#bom-data) via `getDefaultBomFromDOM()` in `graph-data.ts`). `graphData` is derived with `getGraphData(currentBom)` and passed to `ConstellationGraph`.
 - **UI:** `App.tsx` — Hidden `<input type="file" accept=".json,application/json">`; the "Upload JSON" button triggers it via `fileInputRef`. `handleFileSelect` reads the file with `FileReader`, parses JSON, validates, then `setCurrentBom(parsed)` or `setUploadError(...)`.
 - **Error UI:** When `uploadError` is set, a dismissible banner below the header shows the message; "Dismiss" clears it.
-- **Data flow:** `defaultBomData` and `getGraphData()` live in `src/lib/graph-data.ts`. The graph component receives `graphData` as a prop instead of importing it, so it always renders the current BOM (default or uploaded).
+- **Data flow:** The default BOM is read from the DOM by `getDefaultBomFromDOM()`; `getGraphData()` lives in `src/lib/graph-data.ts`. The graph component receives `graphData` as a prop instead of importing it, so it always renders the current BOM (default or uploaded).

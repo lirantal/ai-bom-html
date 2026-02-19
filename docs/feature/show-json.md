@@ -19,4 +19,4 @@ The **Show JSON** button in the header toggles a panel that displays the raw Cyc
 ## Implementation
 
 - **UI:** `App.tsx` — "Show JSON" button toggles `showJSON` state. The Raw CycloneDX panel renders when `showJSON` is true. The copy button calls `copyJsonToClipboard()`, which uses `navigator.clipboard.writeText()` with the stringified BOM; `jsonCopied` state drives the check-icon feedback with a 2s reset.
-- **Data:** The BOM shown is `currentBom` in App (initialized from `defaultBomData`; see [Upload JSON](./json-upload.md)). It is the single source of truth for the graph and the JSON panel.
+- **Data:** The BOM shown is `currentBom` in App (initialized from the injected BOM (script#bom-data) via `getDefaultBomFromDOM()`; see [Upload JSON](./json-upload.md)). It is the single source of truth for the graph and the JSON panel.

@@ -11,7 +11,7 @@ npm run build    # → dist/index.html (single file, all assets inlined)
 npm run preview  # preview production build
 ```
 
-Default BOM comes from **`data.json`** at project root; edit it and rebuild to change the default graph. See [docs/project.md](docs/project.md) for build and data source details.
+Default BOM comes from **`data.json`** at project root (injected into the HTML at build time); edit it and rebuild to change the default graph. See [docs/project.md](docs/project.md) for build and data source details. To build a data-free viewer for another project to inject their BOM later, use **`npm run build:template`** — see [docs/html-template.md](docs/html-template.md).
 
 ## Features
 

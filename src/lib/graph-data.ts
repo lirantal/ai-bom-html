@@ -225,13 +225,49 @@ export const nodeTypeConfig: Record<NodeType, { color: string; bgColor: string; 
   },
 };
 
-// AI-BOM data (CycloneDX format) — edit root data.json to change the graph
-import bomDataJson from '../../data.json';
+// BOM is injected at build time into <script id="bom-data"> (see docs/html-template.md)
 
-/** Default BOM loaded from data.json; used as initial state and for reset. */
-export const defaultBomData: CycloneDXBom = bomDataJson as CycloneDXBom;
+const BOM_SCRIPT_ID = 'bom-data';
+const PLACEHOLDER_TOKEN = '{{{PLACEHOLDER_JSON_TOKEN}}}';
 
-/** Convert BOM to graph; use defaultBomData or uploaded JSON. */
+/** Minimal valid CycloneDX BOM used when script tag is missing, placeholder, or invalid. */
+const MINIMAL_BOM: CycloneDXBom = {
+  bomFormat: 'CycloneDX',
+  specVersion: '1.6',
+  version: 1,
+  components: [],
+  dependencies: [],
+};
+
+function isValidCycloneDXBom(value: unknown): value is CycloneDXBom {
+  if (!value || typeof value !== 'object') return false;
+  const o = value as Record<string, unknown>;
+  return (
+    Array.isArray(o.components) &&
+    Array.isArray(o.dependencies) &&
+    (o.bomFormat === 'CycloneDX' || typeof o.specVersion === 'string')
+  );
+}
+
+/**
+ * Read the default BOM from the DOM (injected at build time into script#bom-data).
+ * Returns minimal BOM if the script is missing, contains the template placeholder, or invalid JSON.
+ */
+export function getDefaultBomFromDOM(): CycloneDXBom {
+  if (typeof document === 'undefined') return MINIMAL_BOM;
+  const el = document.getElementById(BOM_SCRIPT_ID);
+  const raw = el?.textContent?.trim();
+  if (!raw || raw === PLACEHOLDER_TOKEN) return MINIMAL_BOM;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (isValidCycloneDXBom(parsed)) return parsed;
+  } catch {
+    // invalid JSON or still placeholder
+  }
+  return MINIMAL_BOM;
+}
+
+/** Convert BOM to graph; use getDefaultBomFromDOM() or uploaded JSON for initial state. */
 export function getGraphData(bom: CycloneDXBom): GraphData {
   return bomToGraphData(bom);
 }
