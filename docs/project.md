@@ -27,7 +27,7 @@ The `dist/` directory is gitignored; it is created only when you run the build.
 1. **`npm run build`** runs **`vite build`** (see `package.json`).
 2. **Vite**:
    - Uses the entry **`index.html`** (project root), which loads **`/src/main.tsx`**.
-   - Bundles the React app (TS/TSX, CSS) and resolves imports (including **`data.json`**).
+   - Bundles the React app (TS/TSX, CSS). A **BOM inject** plugin replaces the `__BOM_INJECT__` marker in the HTML with the contents of **`data.json`** (or a placeholder for the template build). The same injection runs when you use **`npm run dev`**: Vite serves `index.html` with the BOM already embedded, so the browser does not request `data.json` separately.
 3. **vite-plugin-singlefile** runs during the build and:
    - Takes the generated `index.html` and the built JS/CSS assets.
    - Inlines all script and style content into that HTML.
@@ -47,18 +47,13 @@ In **`vite.config.ts`**:
 
 The default AI-BOM data shown when you open the app (and when you reset) comes from **one place at build time** and **optionally from a user upload at runtime**.
 
-### Build-time default: `data.json`
+### Build-time default: injected into HTML
 
 - **File:** **`data.json`** in the **project root** (same level as `package.json`, `index.html`, `src/`).
-- **Usage:** It is **imported** in **`src/lib/graph-data.ts`**:
+- **Mechanism:** The **`index.html`** contains a `<script type="application/json" id="bom-data">__BOM_INJECT__</script>` tag. The **bom-inject** Vite plugin replaces `__BOM_INJECT__` with the contents of **`data.json`** when serving HTML (dev server) and during the normal build (and with a placeholder when building the HTML template). The browser never fetches `data.json` as a separate request—the BOM is already in the delivered HTML. At runtime the app reads it via **`getDefaultBomFromDOM()`** in **`src/lib/graph-data.ts`** (no JSON import in the bundle).
+- **Format:** CycloneDX 1.6 (see `$schema` / `bomFormat` in `data.json`). Editing **`data.json`** and running **`npm run build`** again updates the default graph.
+- **Template build:** Run **`npm run build:template`** to produce a viewer HTML that contains a **placeholder token** instead of `data.json`, so another project can replace it with their own BOM at their build time. See **[docs/html-template.md](html-template.md)** for full details.
 
-  ```ts
-  import bomDataJson from '../../data.json';
-  export const defaultBomData: CycloneDXBom = bomDataJson as CycloneDXBom;
-  ```
-
-- **At build time:** Vite/Rollup treats this as a JSON module. The contents of `data.json` are **bundled into the JavaScript** (no separate network request for `data.json` in the built app). So the built **`dist/index.html`** already contains that default BOM data.
-- **Format:** CycloneDX 1.6 (see `$schema` / `bomFormat` in `data.json`). Editing **`data.json`** and rebuilding changes the default graph and “Reset” behavior.
 
 ### Runtime: user upload
 
@@ -72,5 +67,6 @@ The default AI-BOM data shown when you open the app (and when you reset) comes f
 |----------|--------|
 | Does the build produce a single consolidated HTML file? | **Yes.** One file: **`dist/index.html`**. |
 | Where is that file? | **`dist/index.html`** (and `dist/` is in `.gitignore`). |
-| Where does the default JSON come from? | **Project root `data.json`**, imported in **`src/lib/graph-data.ts`** and bundled into the JS at build time. |
+| Where does the default JSON come from? | **Project root `data.json`**, injected into **`<script id="bom-data">`** at build time; read at runtime by **`getDefaultBomFromDOM()`** in **`src/lib/graph-data.ts`**. |
 | How to change the default BOM? | Edit **`data.json`**, then run **`npm run build`** again. |
+| How to build a data-free viewer for another project to inject BOM later? | Run **`npm run build:template`**; see **[html-template.md](html-template.md)**. |

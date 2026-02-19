@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Filter, Code2, Maximize2, Search, ChevronDown, ChevronRight, Copy, Check, Upload } from 'lucide-react';
 import { ConstellationGraph, type ConstellationGraphHandle } from './components/constellation-graph';
 import { NodeDetailPanel } from './components/node-detail-panel';
-import { type CycloneDXBom, type GraphNode, type NodeType, defaultBomData, getGraphData, nodeTypeConfig, constellationRingOrder } from './lib/graph-data';
+import { type CycloneDXBom, type GraphNode, type NodeType, getDefaultBomFromDOM, getGraphData, nodeTypeConfig, constellationRingOrder } from './lib/graph-data';
 
 const EVO_LOGO_DARK_URL =
   'https://res.cloudinary.com/snyk/image/upload/snyk-mktg-brandui/brand-logos/evo-logo-dark-mode.svg';
@@ -42,7 +42,7 @@ function isValidCycloneDXBom(value: unknown): value is CycloneDXBom {
 }
 
 export default function App() {
-  const [currentBom, setCurrentBom] = useState<CycloneDXBom>(defaultBomData);
+  const [currentBom, setCurrentBom] = useState<CycloneDXBom>(() => getDefaultBomFromDOM());
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [showJSON, setShowJSON] = useState(false);
   const [selectedFilterIds, setSelectedFilterIds] = useState<Set<string>>(new Set());

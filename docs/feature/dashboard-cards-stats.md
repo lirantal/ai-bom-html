@@ -52,11 +52,11 @@ Again: only types that have at least one node in the current graph get a card.
 
 ## Data source
 
-- **BOM:** The app loads the CycloneDX AIBOM from **`data.json`** at the project root (see `src/lib/graph-data.ts`).
+- **BOM:** The app loads the CycloneDX AIBOM from the HTML-injected BOM (see `src/lib/graph-data.ts`: `getDefaultBomFromDOM()`); the default source is **`data.json`** at the project root, injected at build time.
 - **Graph:** `bomToGraphData(bomData)` builds nodes (one per component and one per service) and edges from `dependencies`. Node types are inferred from the `bom-ref` prefix via `getNodeType()`.
 - **Stats:** The dashboard computes `typeCounts` from `graphData.nodes` (count per `node.type`), then builds the ordered list of types with count &gt; 0 and renders one card per type plus the total Components card.
 
-Changing or replacing `data.json` (e.g. with another AIBOM or an export from Snyk) and rebuilding will update both the graph and the card counts.
+Changing or replacing `data.json` and rebuilding (or, for the template build, replacing the placeholder with your BOM) will update both the graph and the card counts.
 
 ## Interaction: filtering from cards
 

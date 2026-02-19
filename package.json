@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:template": "BUILD_TEMPLATE=1 vite build",
     "preview": "vite preview"
   },
   "dependencies": {
