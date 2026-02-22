@@ -7,7 +7,7 @@ export type Opener = (filePath: string) => void | Promise<void>
  * Open a file in the default system browser.
  * macOS: open, Linux: xdg-open, Windows: start
  */
-function openInBrowser(filePath: string): void {
+function openInBrowser (filePath: string): void {
   const absolutePath = path.resolve(filePath)
   const platform = process.platform
   let command: string
@@ -29,6 +29,6 @@ function openInBrowser(filePath: string): void {
  * Returns the default opener (opens file in browser).
  * Inject a custom opener in tests to no-op or spy.
  */
-export function getDefaultOpener(): Opener {
+export function getDefaultOpener (): Opener {
   return openInBrowser
 }

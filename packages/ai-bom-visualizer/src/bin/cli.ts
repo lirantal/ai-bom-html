@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util'
 import { run } from '../lib/run.js'
 import { getDefaultOpener } from '../lib/open-browser.js'
 
-function getBinDir(): string {
+function getBinDir (): string {
   // ESM: use import.meta.url (resolves to the actual script file)
   try {
     const url = (import.meta as { url?: string }).url
@@ -29,11 +29,11 @@ function getBinDir(): string {
   return path.dirname(path.resolve(scriptPath ?? '.'))
 }
 
-function readStdin(): string {
+function readStdin (): string {
   return fs.readFileSync(0, 'utf8')
 }
 
-function printHelp(): void {
+function printHelp (): void {
   const help = `
 ai-bom-visualizer — Render CycloneDX AI-BOM JSON as an HTML visual
 
@@ -54,7 +54,7 @@ EXAMPLES
   console.log(help.trim())
 }
 
-function main(): number {
+function main (): number {
   const { values } = parseArgs({
     options: {
       view: { type: 'boolean', short: 'v', default: false },

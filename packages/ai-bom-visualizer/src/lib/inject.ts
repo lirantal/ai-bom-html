@@ -3,7 +3,7 @@ export const PLACEHOLDER_TOKEN = '{{{PLACEHOLDER_JSON_TOKEN}}}'
 /**
  * Escape </script> in JSON so the HTML parser does not close the script tag early.
  */
-function escapeScriptContent(s: string): string {
+function escapeScriptContent (s: string): string {
   return s.replace(/<\/script/gi, '\\u003c/script')
 }
 
@@ -13,7 +13,7 @@ function escapeScriptContent(s: string): string {
  * also contains the token as a string literal in the bundled JS).
  * Escapes any </script in the JSON so the HTML remains valid.
  */
-export function injectBomIntoHtml(htmlTemplate: string, bomJson: string): string {
+export function injectBomIntoHtml (htmlTemplate: string, bomJson: string): string {
   const safe = escapeScriptContent(bomJson)
   const scriptTagPattern = new RegExp(
     `(id="bom-data">)${escapeRegex(PLACEHOLDER_TOKEN)}(</script>)`,
@@ -22,6 +22,6 @@ export function injectBomIntoHtml(htmlTemplate: string, bomJson: string): string
   return htmlTemplate.replace(scriptTagPattern, `$1${safe}$2`)
 }
 
-function escapeRegex(s: string): string {
+function escapeRegex (s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

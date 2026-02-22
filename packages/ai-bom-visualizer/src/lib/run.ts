@@ -4,7 +4,7 @@ import { injectBomIntoHtml, PLACEHOLDER_TOKEN } from './inject.js'
 import { getViewerTemplatePath } from './template-path.js'
 import type { Opener } from './open-browser.js'
 
-function minimalCycloneDXCheck(value: unknown): boolean {
+function minimalCycloneDXCheck (value: unknown): boolean {
   if (!value || typeof value !== 'object') return false
   const o = value as Record<string, unknown>
   return (
@@ -14,7 +14,7 @@ function minimalCycloneDXCheck(value: unknown): boolean {
   )
 }
 
-function getDefaultOutputFilename(): string {
+function getDefaultOutputFilename (): string {
   const now = new Date()
   const h = String(now.getHours()).padStart(2, '0')
   const m = String(now.getMinutes()).padStart(2, '0')
@@ -38,7 +38,7 @@ export interface RunOptions {
 /**
  * Load BOM JSON, inject into template, write HTML, optionally open in browser.
  */
-export function run(options: RunOptions): string {
+export function run (options: RunOptions): string {
   const { bomJson, binDir, outputPath, view, opener } = options
 
   let parsed: unknown
