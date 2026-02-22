@@ -7,6 +7,7 @@ import { run } from '../lib/run.js'
 import { getDefaultOpener } from '../lib/open-browser.js'
 
 function getBinDir(): string {
+  // ESM: use import.meta.url (resolves to the actual script file)
   try {
     const url = (import.meta as { url?: string }).url
     if (url?.startsWith('file:')) {
@@ -15,7 +16,17 @@ function getBinDir(): string {
   } catch {
     // CJS or no import.meta
   }
-  return path.dirname(path.resolve(process.argv[1] ?? '.'))
+  // Fallback: resolve argv[1] so symlinks (e.g. npx -> node_modules/.bin/ai-bom-visualizer) resolve to real cli.cjs
+  const scriptPath = process.argv[1]
+  if (scriptPath) {
+    try {
+      const real = fs.realpathSync(scriptPath)
+      return path.dirname(real)
+    } catch {
+      // realpathSync can fail for some paths; use unresolved path
+    }
+  }
+  return path.dirname(path.resolve(scriptPath ?? '.'))
 }
 
 function readStdin(): string {
