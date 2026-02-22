@@ -22,10 +22,12 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24.x
           cache: 'pnpm'
+      - name: Update npm
+        run: npm update -g npm
       - name: install root dependencies
         run: pnpm install --frozen-lockfile
       - name: build root HTML template
@@ -45,5 +47,5 @@ jobs:
           title: "chore: new release candidate"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
