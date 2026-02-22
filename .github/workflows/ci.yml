@@ -18,6 +18,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{matrix.node}}
+      - name: install root dependencies
+        run: npm install
+        working-directory: .
+      - name: build root HTML template
+        run: npm run build:template
+        working-directory: .
       - name: install dependencies
         run: npm ci
       - name: lint code
@@ -48,6 +54,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.x"
+      - name: install root dependencies
+        run: npm install
+        working-directory: .
+      - name: build root HTML template
+        run: npm run build:template
+        working-directory: .
       - name: install dependencies
         run: npm ci
       - name: build project
