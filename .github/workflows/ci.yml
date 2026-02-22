@@ -43,26 +43,3 @@ jobs:
         env:
           CI: true
 
-  release-preview:
-    runs-on: ubuntu-latest
-    needs: test
-    defaults:
-      run:
-        working-directory: packages/ai-bom-visualizer
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22.x"
-      - name: install root dependencies
-        run: npm install
-        working-directory: .
-      - name: build root HTML template
-        run: npm run build:template
-        working-directory: .
-      - name: install dependencies
-        run: npm ci
-      - name: build project
-        run: npm run build
-      - name: release preview with pkr-pr-new
-        run: npx pkg-pr-new publish
