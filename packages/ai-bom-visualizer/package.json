@@ -1,6 +1,6 @@
 {
   "name": "ai-bom-visualizer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Command-Line tool for an AI-BOM Visualizer",
   "types": "dist/main.d.ts",
   "type": "module",
