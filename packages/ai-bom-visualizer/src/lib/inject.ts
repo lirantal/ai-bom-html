@@ -13,15 +13,10 @@ function escapeScriptContent (s: string): string {
  * also contains the token as a string literal in the bundled JS).
  * Escapes any </script in the JSON so the HTML remains valid.
  */
+/** Literal regex for the script tag with placeholder (safe: token is a build-time constant). */
+const SCRIPT_TAG_WITH_PLACEHOLDER = /(id="bom-data">)\{\{\{PLACEHOLDER_JSON_TOKEN\}\}\}(<\/script>)/i
+
 export function injectBomIntoHtml (htmlTemplate: string, bomJson: string): string {
   const safe = escapeScriptContent(bomJson)
-  const scriptTagPattern = new RegExp(
-    `(id="bom-data">)${escapeRegex(PLACEHOLDER_TOKEN)}(</script>)`,
-    'i'
-  )
-  return htmlTemplate.replace(scriptTagPattern, `$1${safe}$2`)
-}
-
-function escapeRegex (s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return htmlTemplate.replace(SCRIPT_TAG_WITH_PLACEHOLDER, `$1${safe}$2`)
 }
