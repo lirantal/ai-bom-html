@@ -37,6 +37,7 @@ jobs:
         run: npm run build
         working-directory: packages/ai-bom-visualizer
       - name: Create Release Pull Request or Publish to npm
+        working-directory: packages/ai-bom-visualizer
         uses: changesets/action@v1
         with:
           version: pnpm run version
