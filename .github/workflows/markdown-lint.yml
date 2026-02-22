@@ -1,0 +1,26 @@
+name: Markdown Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  markdown_lint:
+    name: Lint Markdown files
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/ai-bom-visualizer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Markdown Lint
+        run: |
+          npm run lint:markdown || npx -y markdownlint-cli@0.45.0 -c ../../.github/.markdownlint.yml -i '.git' -i '__tests__' -i '.github' -i '.changeset' -i 'CODE_OF_CONDUCT.md' -i 'CHANGELOG.md' -i 'node_modules' -i 'dist' -i 'docs/**' '**/**.md' --fix
