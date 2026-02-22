@@ -37,7 +37,6 @@ jobs:
         run: npm run build
         working-directory: packages/ai-bom-visualizer
       - name: Create Release Pull Request or Publish to npm
-        working-directory: packages/ai-bom-visualizer
         uses: changesets/action@v1
         with:
           version: pnpm run version
@@ -46,4 +45,5 @@ jobs:
           title: "chore: new release candidate"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
