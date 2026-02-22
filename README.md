@@ -9,7 +9,21 @@ A single-page viewer for **CycloneDX AI Bill of Materials** (AI-BOM). Renders co
 
 The AI-BOM Visualizer project is also deployed live here for public use: [https://ai-bom-visualizer.vercel.app](https://ai-bom-visualizer.vercel.app)
 
-## Quick start
+## Quickstart for AI BOM Visualizer package
+
+To visualize your AI-BOM in your own local environment, pipe a valid CycloneDX JSON data to the `ai-bom-visualizer` npm CLI utility as follows:
+
+```sh
+cat data.json | npx ai-bom-visualizer --view
+```
+
+If you're using Snyk to create an AI-BOM:
+
+```sh
+snyk aibom --experimental --json | npx ai-bom-visualizer --view
+```
+
+## Quickstart for Developers of AI BOM Visualizer website
 
 ```bash
 npm install
