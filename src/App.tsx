@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Filter, Code2, Maximize2, Search, ChevronDown, ChevronRight, Copy, Check, Upload } from 'lucide-react';
+import { Filter, Code2, Maximize2, Search, ChevronDown, ChevronRight, Copy, Check, Upload, Github } from 'lucide-react';
 import { ConstellationGraph, type ConstellationGraphHandle } from './components/constellation-graph';
 import { NodeDetailPanel } from './components/node-detail-panel';
 import { type CycloneDXBom, type GraphNode, type NodeType, getDefaultBomFromDOM, getGraphData, nodeTypeConfig, constellationRingOrder } from './lib/graph-data';
@@ -143,11 +143,13 @@ export default function App() {
       <header className="h-14 border-b border-border/50 flex items-center justify-between px-4 bg-card/30 backdrop-blur-md relative z-50">
         <div className="flex items-center gap-4">
           {/* Evo by Snyk Logo (official from evo.ai.snyk.io) */}
-          <img
-            src={EVO_LOGO_DARK_URL}
-            alt="Evo by Snyk"
-            className="h-8 w-auto object-contain"
-          />
+          <a href="https://evo.ai.snyk.io/" target="_blank" rel="noopener noreferrer">
+            <img
+              src={EVO_LOGO_DARK_URL}
+              alt="Evo by Snyk"
+              className="h-8 w-auto object-contain"
+            />
+          </a>
           
           <div className="h-6 w-px bg-border/50" />
           
@@ -259,6 +261,17 @@ export default function App() {
             <Upload className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-foreground/80">Upload JSON</span>
           </button>
+
+          {/* GitHub repo link */}
+          <a
+            href="https://github.com/lirantal/ai-bom-visualizer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 w-8 bg-secondary/40 hover:bg-secondary/60 border border-border/50 rounded-md flex items-center justify-center transition-colors"
+            title="View on GitHub"
+          >
+            <Github className="w-4 h-4 text-foreground/70" />
+          </a>
         </div>
       </header>
 
