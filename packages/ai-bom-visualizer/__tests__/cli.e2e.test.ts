@@ -28,6 +28,36 @@ function runCli(args: string[], stdin?: string): Promise<{ stdout: string; stder
   })
 }
 
+/**
+ * Simulate a slow producer that writes spinner text first, pauses, then writes
+ * JSON — mimicking the Snyk CLI behaviour that prefixes stdout with progress
+ * animation before emitting the actual payload.
+ */
+function runCliWithDelayedStdin(
+  args: string[],
+  chunks: { data: string; delayMs: number }[],
+): Promise<{ stdout: string; stderr: string; code: number | null }> {
+  return new Promise((resolve) => {
+    const proc = spawn('node', [cliPath, ...args], {
+      cwd: process.cwd(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+    let stdout = ''
+    let stderr = ''
+    proc.stdout?.on('data', (d) => { stdout += d })
+    proc.stderr?.on('data', (d) => { stderr += d })
+
+    let offset = 0
+    for (const chunk of chunks) {
+      offset += chunk.delayMs
+      setTimeout(() => { proc.stdin?.write(chunk.data) }, offset)
+    }
+    setTimeout(() => { proc.stdin?.end() }, offset + 50)
+
+    proc.on('close', (code) => resolve({ stdout, stderr, code: code ?? null }))
+  })
+}
+
 describe('CLI e2e', () => {
   const minimalBom = '{"bomFormat":"CycloneDX","specVersion":"1.6","version":1,"components":[],"dependencies":[]}'
 
@@ -79,5 +109,33 @@ describe('CLI e2e', () => {
     const { stdout, stderr, code } = await runCli(['--help'])
     assert.strictEqual(code, 0)
     assert.ok(stdout.includes('ai-bom-visualizer') && stdout.includes('--view') && stdout.includes('--file'))
+  })
+
+  test('handles stdin with leading spinner/progress text before JSON', { skip: !hasBuild }, async () => {
+    const spinnerPrefix = '\\ Creating file bundle\n- Analyzing\n'
+    const stdinWithPrefix = spinnerPrefix + minimalBom
+    const { stdout, stderr, code } = await runCli([], stdinWithPrefix)
+    assert.strictEqual(code, 0, `stderr: ${stderr}`)
+    const outPath = stdout.trim()
+    assert.ok(outPath.endsWith('.html'))
+    assert.ok(fs.existsSync(outPath))
+    const content = fs.readFileSync(outPath, 'utf8')
+    assert.ok(content.includes('"bomFormat":"CycloneDX"'))
+    fs.unlinkSync(outPath)
+  })
+
+  test('handles delayed stdin from a slow producer', { skip: !hasBuild }, async () => {
+    const { stdout, stderr, code } = await runCliWithDelayedStdin([], [
+      { data: '\\ Creating file bundle\n', delayMs: 0 },
+      { data: '- Analyzing\n', delayMs: 100 },
+      { data: minimalBom, delayMs: 200 },
+    ])
+    assert.strictEqual(code, 0, `stderr: ${stderr}`)
+    const outPath = stdout.trim()
+    assert.ok(outPath.endsWith('.html'))
+    assert.ok(fs.existsSync(outPath))
+    const content = fs.readFileSync(outPath, 'utf8')
+    assert.ok(content.includes('"bomFormat":"CycloneDX"'))
+    fs.unlinkSync(outPath)
   })
 })
