@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { run } from '../lib/run.js'
 import { getDefaultOpener } from '../lib/open-browser.js'
+import { extractJson } from '../lib/extract-json.js'
 
 function getBinDir (): string {
   // ESM: use import.meta.url (resolves to the actual script file)
@@ -29,8 +30,12 @@ function getBinDir (): string {
   return path.dirname(path.resolve(scriptPath ?? '.'))
 }
 
-function readStdin (): string {
-  return fs.readFileSync(0, 'utf8')
+async function readStdin (): Promise<string> {
+  const chunks: Buffer[] = []
+  for await (const chunk of process.stdin) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+  }
+  return Buffer.concat(chunks).toString('utf8')
 }
 
 function printHelp (): void {
@@ -54,7 +59,7 @@ EXAMPLES
   console.log(help.trim())
 }
 
-function main (): number {
+async function main (): Promise<number> {
   const { values } = parseArgs({
     options: {
       view: { type: 'boolean', short: 'v', default: false },
@@ -86,8 +91,9 @@ function main (): number {
       )
       return 1
     }
+    let rawStdin: string
     try {
-      bomJson = readStdin()
+      rawStdin = await readStdin()
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       const noInput = /EAGAIN|temporarily unavailable|EOF/i.test(message)
@@ -98,12 +104,13 @@ function main (): number {
       )
       return 1
     }
-    if (!bomJson?.trim()) {
+    if (!rawStdin?.trim()) {
       console.error(
         'ai-bom-visualizer: No input provided. Pipe AI-BOM JSON to stdin or use --file <path>. See --help.'
       )
       return 1
     }
+    bomJson = extractJson(rawStdin)
   }
 
   const binDir = getBinDir()
@@ -127,4 +134,4 @@ function main (): number {
   return 0
 }
 
-process.exitCode = main()
+main().then((code) => { process.exitCode = code })
