@@ -1,4 +1,4 @@
-# ai-bom-visualizer
+# aibom
 
 ## 1.0.2
 

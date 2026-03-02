@@ -1,11 +1,11 @@
 {
-  "name": "ai-bom-visualizer",
-  "version": "1.0.2",
-  "description": "A Command-Line tool for an AI-BOM Visualizer",
+  "name": "aibom",
+  "version": "1.0.0",
+  "description": "An AI-BOM toolkit and Command-Line tool",
   "types": "dist/main.d.ts",
   "type": "module",
   "bin": {
-    "ai-bom-visualizer": "dist/bin/cli.cjs"
+    "aibom": "dist/bin/cli.cjs"
   },
   "exports": {
     ".": {
@@ -61,15 +61,19 @@
   },
   "license": "Apache-2.0",
   "keywords": [
-    "ai-bom"
+    "aibom",
+    "ai-bill-of-materials",
+    "ai-bom",
+    "sbom",
+    "software-bill-of-materials"
   ],
-  "homepage": "https://github.com/lirantal/ai-bom-visualizer",
+  "homepage": "https://github.com/lirantal/aibom",
   "bugs": {
-    "url": "https://github.com/lirantal/ai-bom-visualizer/issues"
+    "url": "https://github.com/lirantal/aibom/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lirantal/ai-bom-visualizer.git"
+    "url": "git+https://github.com/lirantal/aibom.git"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
