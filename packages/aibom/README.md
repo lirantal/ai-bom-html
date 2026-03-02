@@ -1,11 +1,11 @@
 <!-- markdownlint-disable -->
 
 <p align="center"><h1 align="center">
-  ai-bom-visualizer
+  aibom toolkit and cli
 </h1>
 
 <p align="center">
-  A Command-Line tool for an AI-BOM Visualizer
+  An AI-BOM toolkit and Command-Line tool
 </p>
 
 <p align="center">
@@ -21,14 +21,14 @@
 ## Install
 
 ```sh
-npm add ai-bom-visualizer
+npm add aibom
 ```
 ## Usage
 
 Pipe AI-BOM JSON from stdin and open the result in your browser:
 
 ```bash
-snyk aibom --experimental --json | npx ai-bom-visualizer --view
+snyk aibom --experimental --json | npx aibom --view
 ```
 
 **Options:**
@@ -41,10 +41,10 @@ snyk aibom --experimental --json | npx ai-bom-visualizer --view
 
 ```bash
 # From stdin (e.g. Snyk)
-snyk aibom --experimental --json | npx ai-bom-visualizer --view
+snyk aibom --experimental --json | npx aibom --view
 
 # From a file
-npx ai-bom-visualizer --file ./my-bom.json --output report.html --view
+npx aibom --file ./my-bom.json --output report.html --view
 ```
 
 ## Build
@@ -63,4 +63,4 @@ Please consult [CONTRIBUTING](../../.github/CONTRIBUTING.md) for guidelines on c
 
 ## Author
 
-**ai-bom-visualizer** © [Liran Tal](https://github.com/lirantal), Released under the [Apache-2.0](./LICENSE) License.
+**aibom** © [Liran Tal](https://github.com/lirantal), Released under the [Apache-2.0](./LICENSE) License.

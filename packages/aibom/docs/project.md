@@ -1,11 +1,13 @@
-# AI-BOM Visualizer CLI — Project overview
+# AI-BOM CLI — Project overview
+
+Note: this CLI project was previously named **ai-bom-visualizer**. It has now been renamed to **aibom** npm package name.
 
 ## Purpose
 
-The **ai-bom-visualizer** CLI reads CycloneDX AI-BOM JSON (from stdin or a file), injects it into a single-file HTML viewer template, and writes an HTML file. With `--view`, it opens the result in the default system browser. It is intended for use with tools like Snyk that emit AI-BOM on stdout:
+The **aibom** CLI reads CycloneDX AI-BOM JSON (from stdin or a file), injects it into a single-file HTML viewer template, and writes an HTML file. With `--view`, it opens the result in the default system browser. It is intended for use with tools like Snyk that emit AI-BOM on stdout:
 
 ```bash
-snyk aibom --experimental --json | npx ai-bom-visualizer --view
+snyk aibom --experimental --json | npx aibom --view
 ```
 
 ## Project structure
@@ -20,7 +22,7 @@ snyk aibom --experimental --json | npx ai-bom-visualizer --view
 
 ## Relationship with the root visualizer HTML
 
-This CLI lives in **`packages/ai-bom-visualizer`** inside the **ai-bom-html** repo. The root of the repo is a Vite app that builds a single-file AI-BOM viewer:
+This CLI lives in **`packages/aibom`** inside the **ai-bom-html** repo. The root of the repo is a Vite app that builds a single-file AI-BOM viewer:
 
 - **Root** runs `npm run build:template` (`BUILD_TEMPLATE=1 vite build`) and produces **`dist/index.html`** with a placeholder `{{{PLACEHOLDER_JSON_TOKEN}}}` inside `<script type="application/json" id="bom-data">…</script>`.
 - The **CLI build** depends on that template: it runs `npm run build:template --prefix ../..`, then copies **`../../dist/index.html`** to **`dist/viewer-template.html`** so the published package contains the viewer.
@@ -30,7 +32,7 @@ See the root docs **`docs/html-template.md`** and **`docs/project.md`** for how 
 
 ## How to run tests
 
-From **`packages/ai-bom-visualizer`**:
+From **`packages/aibom`**:
 
 ```bash
 # Unit and integration tests (no build required for unit tests)
