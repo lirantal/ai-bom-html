@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { run } from '../src/lib/run.ts'
+import { run, render } from '../src/lib/run.ts'
 import { PLACEHOLDER_TOKEN } from '../src/lib/inject.ts'
 
 const minimalBom = JSON.stringify({
@@ -86,5 +86,36 @@ describe('run', () => {
     assert.strictEqual(openerCalls.length, 1)
     assert.strictEqual(openerCalls[0], outPath)
     fs.rmSync(tmpDir, { recursive: true })
+  })
+})
+
+describe('render', () => {
+  test('returns HTML string with injected BOM (no file written)', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aibom-'))
+    const templatePath = path.join(tmpDir, 'viewer-template.html')
+    fs.writeFileSync(templatePath, templateWithPlaceholder)
+    const binDir = path.join(tmpDir, 'bin')
+    fs.mkdirSync(binDir, { recursive: true })
+
+    const html = render({ bomJson: minimalBom, binDir })
+
+    assert.ok(typeof html === 'string')
+    assert.ok(html.includes('"bomFormat":"CycloneDX"'))
+    assert.ok(!html.includes(PLACEHOLDER_TOKEN))
+    fs.rmSync(tmpDir, { recursive: true })
+  })
+
+  test('throws on invalid JSON', () => {
+    assert.throws(
+      () => render({ bomJson: 'not json', binDir: os.tmpdir() }),
+      /Invalid JSON/
+    )
+  })
+
+  test('throws on invalid CycloneDX shape', () => {
+    assert.throws(
+      () => render({ bomJson: '{"foo":1}', binDir: os.tmpdir() }),
+      /Invalid CycloneDX/
+    )
   })
 })

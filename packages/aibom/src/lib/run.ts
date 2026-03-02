@@ -22,24 +22,13 @@ function getDefaultOutputFilename (): string {
   return `ai-bom-visual-output-${h}-${m}-${s}.html`
 }
 
-export interface RunOptions {
-  /** JSON string (from stdin or file) */
+export interface RenderOptions {
   bomJson: string
-  /** Directory containing the CLI entry (e.g. dist/bin) */
   binDir: string
-  /** Output path; if not set, use timestamped name in cwd */
-  outputPath?: string
-  /** If true, open the output file in the default browser */
-  view: boolean
-  /** Optional opener; if not set, use default (open in browser) */
-  opener?: Opener
 }
 
-/**
- * Load BOM JSON, inject into template, write HTML, optionally open in browser.
- */
-export function run (options: RunOptions): string {
-  const { bomJson, binDir, outputPath, view, opener } = options
+export function render (options: RenderOptions): string {
+  const { bomJson, binDir } = options
 
   let parsed: unknown
   try {
@@ -68,7 +57,21 @@ export function run (options: RunOptions): string {
     throw new Error('Viewer template does not contain the expected placeholder token')
   }
 
-  const html = injectBomIntoHtml(template, bomJson)
+  return injectBomIntoHtml(template, bomJson)
+}
+
+export interface RunOptions {
+  bomJson: string
+  binDir: string
+  outputPath?: string
+  view: boolean
+  opener?: Opener
+}
+
+export function run (options: RunOptions): string {
+  const { bomJson, binDir, outputPath, view, opener } = options
+
+  const html = render({ bomJson, binDir })
   const outPath = outputPath
     ? path.resolve(process.cwd(), outputPath)
     : path.join(process.cwd(), getDefaultOutputFilename())

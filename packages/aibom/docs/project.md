@@ -4,7 +4,7 @@ Note: this CLI project was previously named **ai-bom-visualizer**. It has now be
 
 ## Purpose
 
-The **aibom** CLI reads CycloneDX AI-BOM JSON (from stdin or a file), injects it into a single-file HTML viewer template, and writes an HTML file. With `--view`, it opens the result in the default system browser. It is intended for use with tools like Snyk that emit AI-BOM on stdout:
+The **aibom** CLI reads CycloneDX AI-BOM JSON (from stdin or a file), injects it into a single-file HTML viewer template, and writes an HTML file. With `--view`, it opens the result in the default system browser. With `--serve`, it starts a local HTTP server on `localhost:8081` to serve the generated HTML. It is intended for use with tools like Snyk that emit AI-BOM on stdout:
 
 ```bash
 snyk aibom --experimental --json | npx aibom --view
@@ -17,7 +17,8 @@ snyk aibom --experimental --json | npx aibom --view
 - **`src/lib/inject.ts`** — Replaces the placeholder token in the template with the BOM JSON and escapes `</script>` for safe embedding.
 - **`src/lib/template-path.ts`** — Resolves the path to the bundled `viewer-template.html` relative to the bin directory.
 - **`src/lib/open-browser.ts`** — Cross-platform “open in browser” (macOS `open`, Linux `xdg-open`, Windows `start`). Opener is injectable for tests.
-- **`src/main.ts`** — Library exports: `run`, `injectBomIntoHtml`, `PLACEHOLDER_TOKEN`.
+- **`src/lib/serve.ts`** — Local HTTP server that serves the generated HTML file on `localhost:8081`. Used by the `--serve` CLI flag.
+- **`src/main.ts`** — Library exports: `run`, `injectBomIntoHtml`, `PLACEHOLDER_TOKEN`, `serve`.
 - **`scripts/copy-template.mjs`** — ESM script used at build time to copy the root project’s `dist/index.html` into this package’s `dist/viewer-template.html`.
 
 ## Relationship with the root visualizer HTML

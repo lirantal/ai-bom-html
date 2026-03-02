@@ -3,9 +3,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import { run } from '../lib/run.js'
+import { run, render } from '../lib/run.js'
 import { getDefaultOpener } from '../lib/open-browser.js'
 import { extractJson } from '../lib/extract-json.js'
+import { serve } from '../lib/serve.js'
 
 function getBinDir (): string {
   // ESM: use import.meta.url (resolves to the actual script file)
@@ -48,6 +49,7 @@ USAGE
 
 OPTIONS
   -v, --view      Open the generated HTML in the default browser
+  -s, --serve     Serve the generated HTML on http://localhost:8081
   -f, --file <path>  Read AI-BOM JSON from a file instead of stdin
   -o, --output <path>  Write HTML to this path (default: ai-bom-visual-output-HH-mm-ss.html)
   -h, --help      Show this help
@@ -55,6 +57,7 @@ OPTIONS
 EXAMPLES
   snyk aibom --experimental --json | npx ai-bom-visualizer --view
   npx ai-bom-visualizer --file ./bom.json --output report.html --view
+  npx ai-bom-visualizer --file ./bom.json --serve
 `
   console.log(help.trim())
 }
@@ -63,6 +66,7 @@ async function main (): Promise<number> {
   const { values } = parseArgs({
     options: {
       view: { type: 'boolean', short: 'v', default: false },
+      serve: { type: 'boolean', short: 's', default: false },
       file: { type: 'string', short: 'f' },
       output: { type: 'string', short: 'o' },
       help: { type: 'boolean', short: 'h', default: false },
@@ -114,21 +118,58 @@ async function main (): Promise<number> {
   }
 
   const binDir = getBinDir()
-  const opener = values.view ? getDefaultOpener() : undefined
+  const needsFile = values.view || values.output || !values.serve
 
-  try {
-    const outPath = run({
-      bomJson,
-      binDir,
-      outputPath: values.output,
-      view: values.view ?? false,
-      opener,
-    })
-    console.log(outPath)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error(`ai-bom-visualizer: ${message}`)
-    return 1
+  if (needsFile) {
+    const opener = values.view ? getDefaultOpener() : undefined
+    let outPath: string
+    try {
+      outPath = run({
+        bomJson,
+        binDir,
+        outputPath: values.output,
+        view: values.view ?? false,
+        opener,
+      })
+      console.log(outPath)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`ai-bom-visualizer: ${message}`)
+      return 1
+    }
+
+    if (values.serve) {
+      try {
+        const port = 8081
+        await serve({ filePath: outPath, port })
+        console.log(`Serving on http://localhost:${port} — press Ctrl+C to stop`)
+        await new Promise(() => {})
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error(`ai-bom-visualizer: Failed to start server: ${message}`)
+        return 1
+      }
+    }
+  } else {
+    let html: string
+    try {
+      html = render({ bomJson, binDir })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`ai-bom-visualizer: ${message}`)
+      return 1
+    }
+
+    try {
+      const port = 8081
+      await serve({ html, port })
+      console.log(`Serving on http://localhost:${port} — press Ctrl+C to stop`)
+      await new Promise(() => {})
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error(`ai-bom-visualizer: Failed to start server: ${message}`)
+      return 1
+    }
   }
 
   return 0
