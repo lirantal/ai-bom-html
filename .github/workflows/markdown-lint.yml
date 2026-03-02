@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: packages/ai-bom-visualizer
+        working-directory: packages/aibom
     steps:
       - uses: actions/checkout@v6
 

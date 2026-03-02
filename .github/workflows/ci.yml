@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{matrix.platform}}
     defaults:
       run:
-        working-directory: packages/ai-bom-visualizer
+        working-directory: packages/aibom
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -39,7 +39,7 @@ jobs:
           fail_ci_if_error: true
           verbose: false
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: packages/ai-bom-visualizer
+          directory: packages/aibom
         env:
           CI: true
 
