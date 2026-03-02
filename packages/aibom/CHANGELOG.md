@@ -1,5 +1,11 @@
 # aibom
 
+## 1.1.0
+
+### Minor Changes
+
+- [`ca43116`](https://github.com/lirantal/aibom/commit/ca43116ff1d96034724b98d63144911b00a1dc94) Thanks [@lirantal](https://github.com/lirantal)! - feat: add support for --serve flag to serve the static HTML view web
+
 ## 1.0.2
 
 ### Patch Changes

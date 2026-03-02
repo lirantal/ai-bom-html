@@ -1,6 +1,6 @@
 {
   "name": "aibom",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An AI-BOM toolkit and Command-Line tool",
   "types": "dist/main.d.ts",
   "type": "module",
