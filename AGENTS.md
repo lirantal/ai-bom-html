@@ -6,4 +6,4 @@ This repository contains:
 
 2. **CLI: ai-bom-visualizer** — A Node.js CLI in `packages/ai-bom-visualizer` that reads AI-BOM JSON (stdin or `--file`), injects it into the viewer template, and writes HTML (optionally opens with `--view`). Typical use: `snyk aibom --experimental --json | npx ai-bom-visualizer --view`.
 
-For a deeper dive on the CLI (structure, tests, relationship with the root visualizer), see **[packages/ai-bom-visualizer/docs/project.md](packages/ai-bom-visualizer/docs/project.md)**.
+For a deeper dive on the CLI (structure, tests, relationship with the root visualizer), see **[packages/aibom/docs/project.md](packages/aibom/docs/project.md)**.
