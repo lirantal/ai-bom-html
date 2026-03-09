@@ -57,6 +57,17 @@ npm run build
 
 This runs `build:template:root` (builds the template in the repo root), then `tsc`, `tsup`, and copies the template into `dist/viewer-template.html`. If the root template is missing, run `npm run build:template` from the repository root first.
 
+### Developers quickstart of AI-BOM CLI package
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # → dist/index.html (single file, all assets inlined)
+npm run preview  # preview production build
+```
+
+Default BOM comes from **`data.json`** at project root (injected into the HTML at build time); edit it and rebuild to change the default graph. See [docs/project.md](docs/project.md) for build and data source details. To build a data-free viewer for another project to inject their BOM later, use **`npm run build:template`** — see [docs/html-template.md](docs/html-template.md).
+
 ## Contributing
 
 Please consult [CONTRIBUTING](../../.github/CONTRIBUTING.md) for guidelines on contributing to this project.
