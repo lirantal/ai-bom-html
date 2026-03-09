@@ -37,9 +37,9 @@ https://github.com/user-attachments/assets/54e02fd8-bca8-49ea-ac78-23752bfbaa58
 
 ## Deployed Version
 
-The AI-BOM Visualizer is also deployed live here for public use: [https://ai-bom-visualizer.vercel.app](https://ai-bom-visualizer.vercel.app)
+The AI-BOM web visualizer is also deployed live here for public use: [https://aibom.vercel.app](https://aibom.vercel.app)
 
-## Quickstart for AI BOM Visualizer package
+## Quickstart for AI BOM Toolkit
 
 To visualize your AI-BOM in your own local environment, pipe a valid CycloneDX JSON data to the `aibom` npm CLI utility as follows:
 
@@ -47,13 +47,19 @@ To visualize your AI-BOM in your own local environment, pipe a valid CycloneDX J
 cat data.json | npx aibom --view
 ```
 
-If you're using Snyk to create an AI-BOM:
+You can use the Snyk CLI (free) with the _aibom_ command to create an AI-BOM and pipe it to the `aibom` npm package:
 
 ```sh
 snyk aibom --experimental --json | npx aibom --view
 ```
 
-## Quickstart for Developers of AI BOM Visualizer website
+Instead of `--view`, you can use the `--serve` flag to tell the `aibom` npm package to spin-up a local webserver and serve the HTML file:
+
+```sh
+npx aibom --serve --port 8081
+```
+
+## Developers quickstart of AI-BOM CLI package
 
 ```bash
 npm install
