@@ -1,6 +1,5 @@
 {
-  "framework": "vite",
-  "installCommand": "pnpm install",
   "buildCommand": "pnpm --filter ai-bom-viewer build",
-  "outputDirectory": "packages/webapp/dist"
+  "outputDirectory": "packages/webapp/dist",
+  "framework": null
 }
