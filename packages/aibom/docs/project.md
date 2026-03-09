@@ -21,15 +21,15 @@ snyk aibom --experimental --json | npx aibom --view
 - **`src/main.ts`** — Library exports: `run`, `render`, `injectBomIntoHtml`, `PLACEHOLDER_TOKEN`, `serve`.
 - **`scripts/copy-template.mjs`** — ESM script used at build time to copy the root project’s `dist/index.html` into this package’s `dist/viewer-template.html`.
 
-## Relationship with the root visualizer HTML
+## Relationship with the webapp
 
-This CLI lives in **`packages/aibom`** inside the **ai-bom-html** repo. The root of the repo is a Vite app that builds a single-file AI-BOM viewer:
+This CLI lives in **`packages/aibom`** inside the monorepo. The webapp in **`packages/webapp`** is a Vite app that builds a single-file AI-BOM viewer:
 
-- **Root** runs `npm run build:template` (`BUILD_TEMPLATE=1 vite build`) and produces **`dist/index.html`** with a placeholder `{{{PLACEHOLDER_JSON_TOKEN}}}` inside `<script type="application/json" id="bom-data">…</script>`.
-- The **CLI build** depends on that template: it runs `npm run build:template --prefix ../..`, then copies **`../../dist/index.html`** to **`dist/viewer-template.html`** so the published package contains the viewer.
+- **Webapp** runs `pnpm run build:template` (`BUILD_TEMPLATE=1 vite build`) and produces **`packages/webapp/dist/index.html`** with a placeholder `{{{PLACEHOLDER_JSON_TOKEN}}}` inside `<script type="application/json" id="bom-data">…</script>`.
+- The **CLI build** depends on that template: it runs `pnpm --filter ai-bom-viewer build:template`, then copies **`../webapp/dist/index.html`** to **`dist/viewer-template.html`** so the published package contains the viewer.
 - At runtime the CLI reads `dist/viewer-template.html` and replaces the placeholder with the user’s BOM JSON. By default it writes the result to a file (e.g. `ai-bom-visual-output-HH-mm-ss.html`); with `--serve` alone the HTML is kept in memory and served directly without writing to disk. The same placeholder appears once in the HTML script tag and once as a string in the bundled JS; only the script-tag occurrence is replaced.
 
-See the root docs **`docs/html-template.md`** and **`docs/project.md`** for how the template build and BOM injection work.
+See the webapp docs **`packages/webapp/docs/html-template.md`** and **`packages/webapp/docs/project.md`** for how the template build and BOM injection work.
 
 ## How to run tests
 
@@ -64,11 +64,11 @@ If you run the CLI with no input (no pipe and no `--file`) in an interactive ter
 npm run build
 ```
 
-This runs, in order:
+This runs, in order (see `package.json` scripts):
 
-1. **`build:template:root`** — `npm run build:template --prefix ../..` to produce the root’s `dist/index.html`.
+1. **`build:template:root`** — `pnpm --filter ai-bom-viewer build:template` to produce the webapp's `dist/index.html`.
 2. **`tsc`** — TypeScript compile.
 3. **`tsup`** — Bundle `src/main.ts` and `src/bin/cli.ts` to `dist/` (CJS and ESM).
-4. **`copy:template`** — `node scripts/copy-template.mjs` to copy the root template into `dist/viewer-template.html`.
+4. **`copy:template`** — `node scripts/copy-template.mjs` to copy the webapp template into `dist/viewer-template.html`.
 
 The package **files** include `dist`, so the published tarball contains `dist/bin/cli.cjs`, `dist/viewer-template.html`, and the library builds.

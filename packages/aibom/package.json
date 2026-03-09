@@ -37,7 +37,7 @@
   "scripts": {
     "start": "node --import tsx src/bin/cli.ts",
     "build": "npm run build:template:root && tsc && tsup && npm run copy:template",
-    "build:template:root": "npm run build:template --prefix ../..",
+    "build:template:root": "pnpm --filter ai-bom-viewer build:template",
     "copy:template": "node scripts/copy-template.mjs",
     "lint": "eslint . && npm run lint:lockfile && npm run lint:markdown",
     "lint:markdown": "npx -y markdownlint-cli@0.45.0 -c ../../.github/.markdownlint.yml -i '.git' -i '__tests__' -i '.github' -i '.changeset' -i 'CODE_OF_CONDUCT.md' -i 'CHANGELOG.md' -i 'docs/**' -i 'node_modules' -i 'dist' '**/**.md' --fix",

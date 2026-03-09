@@ -1,35 +1,16 @@
 {
-  "name": "ai-bom-viewer",
-  "version": "0.1.0",
+  "name": "aibom-monorepo",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:template": "BUILD_TEMPLATE=1 vite build",
-    "preview": "vite preview",
+    "dev": "pnpm --filter ai-bom-viewer dev",
+    "build": "pnpm --filter ai-bom-viewer build",
+    "build:template": "pnpm --filter ai-bom-viewer build:template",
     "version": "changeset version",
     "release": "changeset publish"
   },
-  "dependencies": {
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.577.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tailwind-merge": "^3.5.0"
-  },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
-    "@changesets/cli": "^2.27.7",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^4.3.0",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.0",
-    "tailwindcss": "^3.4.0",
-    "typescript": "^5.5.0",
-    "vite": "^5.4.0",
-    "vite-plugin-singlefile": "^2.0.0"
+    "@changesets/cli": "^2.27.7"
   }
 }

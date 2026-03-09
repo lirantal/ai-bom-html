@@ -1,9 +1,9 @@
 # AI-BOM HTML — Agent context
 
-This repository contains:
+This is a pnpm monorepo with two packages:
 
-1. **Root: AI-BOM Viewer (Vite/React)** — A single-file HTML viewer for CycloneDX AI-BOM. Build with `npm run build` or `npm run build:template` for a template with a JSON placeholder. See `docs/project.md` and `docs/html-template.md` in the repo for build and data flow.
+1. **Webapp: AI-BOM Viewer (Vite/React)** in `packages/webapp` — A single-file HTML viewer for CycloneDX AI-BOM. Build with `pnpm run build` or `pnpm run build:template` from the repo root (proxy scripts delegate to the webapp). See `packages/webapp/docs/project.md` and `packages/webapp/docs/html-template.md` for build and data flow.
 
-2. **CLI: ai-bom-visualizer** — A Node.js CLI in `packages/ai-bom-visualizer` that reads AI-BOM JSON (stdin or `--file`), injects it into the viewer template, and writes HTML (optionally opens with `--view`). Typical use: `snyk aibom --experimental --json | npx ai-bom-visualizer --view`.
+2. **CLI: aibom** in `packages/aibom` — A Node.js CLI that reads AI-BOM JSON (stdin or `--file`), injects it into the viewer template, and writes HTML (optionally opens with `--view`). Typical use: `snyk aibom --experimental --json | npx aibom --view`.
 
-For a deeper dive on the CLI (structure, tests, relationship with the root visualizer), see **[packages/aibom/docs/project.md](packages/aibom/docs/project.md)**.
+For a deeper dive on the CLI (structure, tests, relationship with the webapp), see **[packages/aibom/docs/project.md](packages/aibom/docs/project.md)**.
